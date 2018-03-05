@@ -1,7 +1,7 @@
 # DeepCollege
 
 <p align="center">
-<a href="https://i.imgur.com/6XeIDNh.jpg"><img width="800" src="https://i.imgur.com/6XeIDNh.jpg" title="source: imgur.com" /></a>
+<a href="https://i.imgur.com/M4fX4C0.png"><img width="800" src="https://i.imgur.com/M4fX4C0.png" title="source: imgur.com" /></a>
 </p>
 
 ----
