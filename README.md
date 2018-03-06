@@ -10,7 +10,7 @@
 
 ### Introduction
 
-This project aims to create a collection of Jupyter notebooks discussing about important topics in Deep Learning.
+This project aims to create a collection of Jupyter notebooks discussing important topics in Deep Learning.
 
 ### The tour sequence
 
