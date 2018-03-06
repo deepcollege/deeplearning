@@ -41,3 +41,32 @@ This project aims to create a collection of Jupyter notebooks discussing about i
 - StarGAN
 - CycleGAN
 - Reinforcement learning
+
+### Installation
+
+1. Anaconda
+
+Anaconda is a package management platform Data Scientists that lets you easily manage and install dependencies in 
+cross-platform manner. It also ships with *Jupyter Notebook*, which plays a critical role in order to contribute to this
+project.
+
+For more detail about why you should use Anaconda? https://www.quora.com/Why-should-I-use-anaconda-instead-of-traditional-Python-distributions-for-data-science
+
+Installation per platform:
+- Windows: [Install Python on Windows (Anaconda)](https://medium.com/@GalarnykMichael/install-python-on-windows-anaconda-c63c7c3d1444)
+- Mac: [Install Python on Mac (Anaconda)](https://medium.com/@GalarnykMichael/install-python-on-mac-anaconda-ccd9f2014072)
+
+2. Docker
+
+Details will be added shortly
+
+
+### How do you contribute?
+
+1. Join the Discord channel [https://discord.gg/x6S6ce](https://discord.gg/x6S6ce)
+2. Goto _#request-to-join_ channel and post your Github Account name!
+3. Once you are granted with access to the project, please create a git branch with your name
+4. Complete each topic and challenge in order of number sequence
+   - for example: 000-Linear-Classification -> 001-Linear-Regression
+5. Reference existing code submissions from contributors or Wiki pages
+6. I will post Jupyter Notebooks with sample code or challenges to complete
