@@ -42,6 +42,12 @@ This project aims to create a collection of Jupyter notebooks discussing about i
 - CycleGAN
 - Reinforcement learning
 
+### Pre-requesties
+
+- Basic Python Knowledge
+- Some Machine Learning
+- Basic idea about Deep Learning
+
 ### Installation
 
 1. Anaconda
