@@ -23,6 +23,7 @@ This project aims to create a collection of Jupyter notebooks discussing importa
    - vectors & tensors
    - Different neural net layers (dense, dropout, max-pooling layers)
 - Data preprocessing (house price dataset, catvsdog, IMDB)
+- K Mean Clustering
 - CNN (Pytorch, TF, Keras) -> classify whales photos
 - Callbacks (early stopping and etc)
 - TF Dashboard
