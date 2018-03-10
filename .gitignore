@@ -1,1 +1,17 @@
+# Jupyter
+.ipynb_checkpoints/
+
+# Mac
+.DS_*
+
+# Numpy
+*.npy
+
+# Keras
+*.h5
+
+# Pickle
+*.pkl
+
+# Jetbrain
 .idea
