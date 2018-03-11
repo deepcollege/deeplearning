@@ -6,6 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/deepcollege/deeplearning/master)
+[![Discord](https://img.shields.io/discord/102860784329052160.svg)](https://discord.gg/MAMPnmm)
 ----
 
 ### Introduction
@@ -70,7 +71,7 @@ Details will be added shortly
 
 ### How do you contribute?
 
-1. Join the Discord channel [https://discord.gg/x6S6ce](https://discord.gg/x6S6ce)
+1. Join the Discord channel [https://discord.gg/MAMPnmm](https://discord.gg/x6S6ce)
 2. Goto _#request-to-join_ channel and post your Github Account name!
 3. Once you are granted with access to the project, please create a git branch with your name
 4. Complete each topic and challenge in order of number sequence
