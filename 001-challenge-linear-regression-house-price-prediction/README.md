@@ -25,8 +25,10 @@ This challenge is aimed to help you fully understand Linear Regression in ML / D
 
 1. Download the dataset from https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 
-2. Located the dataset under 001-challenge-linear-regression-ww2-weather-conditions/inputs
+2. Locate the dataset under 001-challenge-linear-regression-ww2-weather-conditions/inputs
 
-3. Generate submission.csv according to the objective
+3. Create a notebook or use an existing notebook to build your model
 
-4. Talk to community about your latest submission and make a submit as DeepCollege team
+4. Generate submission.csv according to the objective
+
+5. Talk to community about your latest submission and make a submit as DeepCollege team
