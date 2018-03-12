@@ -14,7 +14,7 @@
 *.pkl
 
 # datafiles
-.gz
+*.gz
 
 # Jetbrain
 .idea
