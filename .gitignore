@@ -13,6 +13,9 @@
 # Pickle
 *.pkl
 
+# datafiles
+.gz
+
 # Jetbrain
 .idea
 
