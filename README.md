@@ -17,6 +17,7 @@ This project aims to create a collection of Jupyter notebooks discussing importa
 
 - Linear Classifier
 - Linear Regression
+- Support Vector Machine
 - Gradient Descent (No framework)
 - Forward props & Back props
 - Multilayer Perceptron
