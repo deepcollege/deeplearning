@@ -39,6 +39,9 @@ This project aims to create a collection of Jupyter notebooks discussing importa
 - Hyperparameter tuning
 - Feature engineering
 - Linear regression Kaggle competition using the above knowledge
+- Bayes Classifier
+- Gaussian Mixture Model
+- VAE
 - Generative Models
 - GAN basic
 - StarGAN
