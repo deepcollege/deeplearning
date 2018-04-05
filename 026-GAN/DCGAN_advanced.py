@@ -5,20 +5,6 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 # mnist = input_data.read_data_sets('./inputs/mnist')
 # Resetting default graph, starting from scratch
-tf.reset_default_graph()
-
-epochs = 6000
-batch_size = 64
-n_noise = 200
-learning_rate = 0.00015
-
-real_images = tf.placeholder(
-    dtype=tf.float32, shape=[None, 28, 28, 1], name='real_images')
-
-# The keep_prob variable will be used by our dropout layers, which we introduce for more stable learning outcome
-keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
-is_training = tf.placeholder(dtype=tf.bool, name='is_training')
-
 
 class DCGAN:
     def __init__(self,
@@ -30,7 +16,7 @@ class DCGAN:
 
         self.img_length = img_length
         self.num_colors = num_colors
-        self.latent_dims = g_sizes['z']
+        self.latent_dims = g_sizes['n_noise']
         self.momentum = 0.99
 
         # For mnist, img_length = 28, num_colors = 1
@@ -43,15 +29,39 @@ class DCGAN:
             dtype=tf.float32, shape=[None, self.latent_dims])
 
         g = self.build_generator(
-            noise, keep_prob, g_sizes=g_sizes)
+            noise, keep_prob, g_sizes['is_training'], g_sizes=g_sizes)
         d_real = self.build_discriminator(
             self.real_images, reuse=None, keep_prob=keep_prob, d_sizes=d_sizes)
         d_fake = self.build_discriminator(
             g, reuse=True, keep_prob=keep_prob, d_sizes=d_sizes)
 
+        vars_g = [var for var in tf.trainable_variables() if 'gen' in var.name]
+        vars_d = [var for var in tf.trainable_variables() if 'disc' in var.name]
+
+        # Applying regularizers
+        d_reg = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(1e-6), vars_d)
+        g_reg = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(1e-6), vars_g)
+
+        # build costs
+        loss_d_real = self.binary_cross_entropy(tf.ones_like(d_real), d_real)
+        loss_d_fake = self.binary_cross_entropy(tf.zeros_like(d_fake), d_fake)
+        loss_g = tf.reduce_mean(self.binary_cross_entropy(tf.ones_like(d_fake), d_fake))
+        loss_d = tf.reduce_mean(0.5 * (loss_d_real + loss_d_fake))
+
+        # Optimizer
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        self.optimizer_d = tf.train.AdamOptimizer(learning_rate).minimize(loss_d + d_reg, var_list=vars_d)
+        self.optimizer_g = tf.train.AdamOptimizer(learning_rate).minimize(loss_g + g_reg, var_list=vars_g)
+
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
 
     def lrelu(self, x):
         return tf.maximum(x, tf.multiply(x, 0.2))
+
+    def binary_cross_entropy(self, x, z):
+        eps = 1e-12
+        return (-(x * tf.log(z + eps) + (1. - x) * tf.log(1. - z + eps)))
 
     def build_discriminator(self, X, reuse=None, keep_prob=None, d_sizes=None):
         '''
@@ -74,12 +84,13 @@ class DCGAN:
                     padding='same',
                     activation=activation)
                 if dropout:
-                    x = tf.layers.dropout(x, self.keep_prob)
+                    x = tf.layers.dropout(x, keep_prob)
 
                 if apply_batch_norm:
                     x = tf.contrib.layers.batch_norm(
                         x, is_training=is_training, decay=self.momentum)
             for units in d_sizes['dense_layers']:
+                print('checking dense units ', units)
                 x = tf.layers.dense(x, units=units, activation=activation)
             x = tf.layers.dense(x, units=1, activation=tf.nn.sigmoid)
             return x
@@ -120,8 +131,58 @@ class DCGAN:
                     padding='same',
                     activation=activation)
                 if dropout:
-                    x = tf.layers.dropout(x, self.keep_prob)
+                    x = tf.layers.dropout(x, keep_prob)
                 if apply_batch_norm:
                     x = tf.contrib.layers.batch_norm(
                         x, is_training=is_training, decay=self.momentum)
             return x
+
+
+tf.reset_default_graph()
+
+epochs = 6000
+batch_size = 64
+n_noise = 200
+learning_rate = 0.00015
+dim = 28
+
+# The keep_prob variable will be used by our dropout layers, which we introduce for more stable learning outcome
+keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
+is_training = tf.placeholder(dtype=tf.bool, name='is_training')
+
+# mnist
+img_dim = 28
+num_colors = 1
+d_sizes = {
+    'conv_layers': [
+        [5, 64, 2, True, False],
+        [5, 64, 1, True, False],
+        [5, 64, 1, True, False]
+    ],
+    'dense_layers': [128]
+}
+
+d1 = 4
+d2 = 1
+g_sizes = {
+    'd1': d1,  # dim
+    'd2': d2,  # channels,
+    'n_noise': n_noise,
+    'is_training': is_training,
+    'dense_layers': [
+        [d1 * d1 * d2, True, True]
+    ],
+    'conv_layers': [
+        [5, 64, 2, True, True],
+        [5, 64, 2, True, True],
+        [5, 64, 1, True, True],
+        [5, 1, 1, False, False]
+    ]
+}
+dcgan = DCGAN(
+    img_dim,
+    num_colors,
+    d_sizes,
+    g_sizes,
+    keep_prob
+)
