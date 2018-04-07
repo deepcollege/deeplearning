@@ -3,16 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 
-# mnist = input_data.read_data_sets('./inputs/mnist')
-# Resetting default graph, starting from scratch
-
 class DCGAN:
     def __init__(self,
                  img_length,
                  num_colors,
                  d_sizes,
                  g_sizes,
-                 keep_prob):
+                 keep_prob,
+                 learning_rate):
 
         self.img_length = img_length
         self.num_colors = num_colors
@@ -137,52 +135,67 @@ class DCGAN:
                         x, is_training=is_training, decay=self.momentum)
             return x
 
+    def fit(self, X, epochs=6000, batch_size=64):
+        for i in range(epochs):
+            train_d = True
+            train_g = True
+            keep_prob_train = 0.6
+            for j in range(batch_size):
+                print(X[j * batch_size:(j+1) * batch_size])
 
-tf.reset_default_graph()
 
-epochs = 6000
-batch_size = 64
-n_noise = 200
-learning_rate = 0.00015
-dim = 28
+def mnist():
+    _mnist = input_data.read_data_sets('./inputs/mnist')
+    # Resetting default graph, starting from scratch
+    tf.reset_default_graph()
 
-# The keep_prob variable will be used by our dropout layers, which we introduce for more stable learning outcome
-keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
-is_training = tf.placeholder(dtype=tf.bool, name='is_training')
+    epochs = 6000
+    batch_size = 64
+    n_noise = 200
+    learning_rate = 0.00015
+    # mnist specific variables
+    img_dim = 28
+    num_colors = 1
 
-# mnist
-img_dim = 28
-num_colors = 1
-d_sizes = {
-    'conv_layers': [
-        [5, 64, 2, True, False],
-        [5, 64, 1, True, False],
-        [5, 64, 1, True, False]
-    ],
-    'dense_layers': [128]
-}
+    # The keep_prob variable will be used by our dropout layers, which we introduce for more stable learning outcome
+    keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
+    is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
-d1 = 4
-d2 = 1
-g_sizes = {
-    'd1': d1,  # dim
-    'd2': d2,  # channels,
-    'n_noise': n_noise,
-    'is_training': is_training,
-    'dense_layers': [
-        [d1 * d1 * d2, True, True]
-    ],
-    'conv_layers': [
-        [5, 64, 2, True, True],
-        [5, 64, 2, True, True],
-        [5, 64, 1, True, True],
-        [5, 1, 1, False, False]
-    ]
-}
-dcgan = DCGAN(
-    img_dim,
-    num_colors,
-    d_sizes,
-    g_sizes,
-    keep_prob
-)
+    d_sizes = {
+        'conv_layers': [
+            [5, 64, 2, True, False],
+            [5, 64, 1, True, False],
+            [5, 64, 1, True, False]
+        ],
+        'dense_layers': [128]
+    }
+
+    d1 = 4
+    d2 = 1
+    g_sizes = {
+        'd1': d1,  # dim
+        'd2': d2,  # channels,
+        'n_noise': n_noise,
+        'is_training': is_training,
+        'dense_layers': [
+            [d1 * d1 * d2, True, True]
+        ],
+        'conv_layers': [
+            [5, 64, 2, True, True],
+            [5, 64, 2, True, True],
+            [5, 64, 1, True, True],
+            [5, 1, 1, False, False]
+        ]
+    }
+    dcgan = DCGAN(
+        img_dim,
+        num_colors,
+        d_sizes,
+        g_sizes,
+        keep_prob,
+        learning_rate
+    )
+    X = _mnist.train.images
+    dcgan.fit(X, epochs=epochs, batch_size=batch_size)
+
+mnist()
