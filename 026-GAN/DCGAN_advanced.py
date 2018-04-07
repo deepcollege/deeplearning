@@ -146,12 +146,11 @@ class DCGAN:
             keep_prob_train = 0.6
             for j in range(batch_size):
                 # Creating noise
-                n = np.random.uniform(0.0, 1.0, [batch_size, self.n_noise]).astype(
-                    np.float32)
+                n = np.random.uniform(0.0, 1.0,
+                                      [batch_size, self.n_noise]).astype(np.float32)
                 # Grabbing next batch
                 batch_X = X[j * batch_size:(j + 1) * batch_size]
                 batch_X = np.reshape(batch_X, newshape=[-1, 28, 28, 1])
-                print('checking istraining ', self.is_training)
                 d_real_ls, d_fake_ls, g_ls, d_ls = self.sess.run(
                     [self.loss_d_real, self.loss_d_fake,
                      self.loss_g, self.loss_d],
@@ -160,6 +159,32 @@ class DCGAN:
                                self.keep_prob: keep_prob_train,
                                self.is_training: True}
                 )
+                d_real_ls = np.mean(d_real_ls)
+                d_fake_ls = np.mean(d_fake_ls)
+
+                g_ls = g_ls
+                d_ls = d_ls
+
+                if g_ls * 1.5 < d_ls:
+                    train_g = False
+                    pass
+
+                if d_ls * 2 < g_ls:
+                    train_d = False
+                    pass
+                if train_d:
+                    self.sess.run(
+                        self.optimizer_d,
+                        feed_dict={self.noise: n,
+                                   self.real_images: batch_X,
+                                   self.keep_prob: keep_prob_train,
+                                   self.is_training: True})
+                if train_g:
+                    self.sess.run(
+                        self.optimizer_g,
+                        feed_dict={self.noise: n,
+                                   self.keep_prob: keep_prob_train,
+                                   self.is_training: True})
 
 
 def mnist():
@@ -175,7 +200,8 @@ def mnist():
     img_dim = 28
     num_colors = 1
 
-    # The keep_prob variable will be used by our dropout layers, which we introduce for more stable learning outcome
+    # The keep_prob variable will be used by our dropout layers,
+    # which we introduce for more stable learning outcome
     keep_prob = tf.placeholder(dtype=tf.float32, name='keep_prob')
     is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
