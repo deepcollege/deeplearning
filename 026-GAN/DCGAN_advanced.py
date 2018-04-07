@@ -10,12 +10,15 @@ class DCGAN:
                  d_sizes,
                  g_sizes,
                  keep_prob,
-                 learning_rate):
+                 learning_rate,
+                 n_noise):
 
         self.img_length = img_length
         self.num_colors = num_colors
         self.latent_dims = g_sizes['n_noise']
         self.momentum = 0.99
+        self.n_noise = n_noise
+        self.keep_prob = keep_prob
 
         # For mnist, img_length = 28, num_colors = 1
         self.real_images = tf.placeholder(
@@ -23,11 +26,12 @@ class DCGAN:
             shape=[None, img_length, img_length, num_colors],
             name='real_images')
 
-        noise = tf.placeholder(
+        self.noise = tf.placeholder(
             dtype=tf.float32, shape=[None, self.latent_dims])
+        self.is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
         g = self.build_generator(
-            noise, keep_prob, g_sizes['is_training'], g_sizes=g_sizes)
+            self.noise, keep_prob, self.is_training, g_sizes=g_sizes)
         d_real = self.build_discriminator(
             self.real_images, reuse=None, keep_prob=keep_prob, d_sizes=d_sizes)
         d_fake = self.build_discriminator(
@@ -41,18 +45,18 @@ class DCGAN:
         g_reg = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(1e-6), vars_g)
 
         # build costs
-        loss_d_real = self.binary_cross_entropy(tf.ones_like(d_real), d_real)
-        loss_d_fake = self.binary_cross_entropy(tf.zeros_like(d_fake), d_fake)
-        loss_g = tf.reduce_mean(self.binary_cross_entropy(tf.ones_like(d_fake), d_fake))
-        loss_d = tf.reduce_mean(0.5 * (loss_d_real + loss_d_fake))
+        self.loss_d_real = self.binary_cross_entropy(tf.ones_like(d_real), d_real)
+        self.loss_d_fake = self.binary_cross_entropy(tf.zeros_like(d_fake), d_fake)
+        self.loss_g = tf.reduce_mean(self.binary_cross_entropy(tf.ones_like(d_fake), d_fake))
+        self.loss_d = tf.reduce_mean(0.5 * (self.loss_d_real + self.loss_d_fake))
 
         # Optimizer
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        self.optimizer_d = tf.train.AdamOptimizer(learning_rate).minimize(loss_d + d_reg, var_list=vars_d)
-        self.optimizer_g = tf.train.AdamOptimizer(learning_rate).minimize(loss_g + g_reg, var_list=vars_g)
+        self.optimizer_d = tf.train.AdamOptimizer(learning_rate).minimize(self.loss_d + d_reg, var_list=vars_d)
+        self.optimizer_g = tf.train.AdamOptimizer(learning_rate).minimize(self.loss_g + g_reg, var_list=vars_g)
 
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+        self.sess = tf.Session()
+        self.sess.run(tf.global_variables_initializer())
 
     def lrelu(self, x):
         return tf.maximum(x, tf.multiply(x, 0.2))
@@ -86,7 +90,7 @@ class DCGAN:
 
                 if apply_batch_norm:
                     x = tf.contrib.layers.batch_norm(
-                        x, is_training=is_training, decay=self.momentum)
+                        x, is_training=self.is_training, decay=self.momentum)
             for units in d_sizes['dense_layers']:
                 print('checking dense units ', units)
                 x = tf.layers.dense(x, units=units, activation=activation)
@@ -141,7 +145,21 @@ class DCGAN:
             train_g = True
             keep_prob_train = 0.6
             for j in range(batch_size):
-                print(X[j * batch_size:(j+1) * batch_size])
+                # Creating noise
+                n = np.random.uniform(0.0, 1.0, [batch_size, self.n_noise]).astype(
+                    np.float32)
+                # Grabbing next batch
+                batch_X = X[j * batch_size:(j + 1) * batch_size]
+                batch_X = np.reshape(batch_X, newshape=[-1, 28, 28, 1])
+                print('checking istraining ', self.is_training)
+                d_real_ls, d_fake_ls, g_ls, d_ls = self.sess.run(
+                    [self.loss_d_real, self.loss_d_fake,
+                     self.loss_g, self.loss_d],
+                    feed_dict={self.real_images: batch_X,
+                               self.noise: n,
+                               self.keep_prob: keep_prob_train,
+                               self.is_training: True}
+                )
 
 
 def mnist():
@@ -187,13 +205,15 @@ def mnist():
             [5, 1, 1, False, False]
         ]
     }
+
     dcgan = DCGAN(
         img_dim,
         num_colors,
         d_sizes,
         g_sizes,
         keep_prob,
-        learning_rate
+        learning_rate,
+        n_noise
     )
     X = _mnist.train.images
     dcgan.fit(X, epochs=epochs, batch_size=batch_size)
