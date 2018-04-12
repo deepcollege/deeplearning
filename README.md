@@ -77,7 +77,9 @@ after use, you are technically not installing anything on the
 bare-metal.
 
 1. Tensorflow official image
+
 It includes
+
 - Tensorflow:latest CPU
 - Pillow
 - h5py
@@ -92,6 +94,7 @@ It includes
 1. On Mac or Linux
 
 Install on Mac: https://docs.docker.com/docker-for-mac/install/
+
 Install on Linux: https://docs.docker.com/install/
 
 ```sh
