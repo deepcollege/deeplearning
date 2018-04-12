@@ -28,7 +28,7 @@ This project aims to create a collection of Jupyter notebooks discussing importa
 - K Mean Clustering
 - CNN (Pytorch, TF, Keras) -> classify whales photos
 - Callbacks (early stopping and etc)
-- TF Dashboard
+- Tensorboard
 - Training model in the cloud
 - Sentiment Analysis (binary classification)
 - Sentiment analysis (multi-classification)
