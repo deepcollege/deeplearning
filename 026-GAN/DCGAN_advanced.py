@@ -244,4 +244,3 @@ def mnist():
     X = _mnist.train.images
     dcgan.fit(X, epochs=epochs, batch_size=batch_size)
 
-mnist()
