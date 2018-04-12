@@ -56,7 +56,7 @@ This project aims to create a collection of Jupyter notebooks discussing importa
 
 ### Installation
 
-1. Anaconda
+#### 1. Anaconda
 
 Anaconda is a package management platform Data Scientists that lets you easily manage and install dependencies in 
 cross-platform manner. It also ships with *Jupyter Notebook*, which plays a critical role in order to contribute to this
@@ -68,10 +68,51 @@ Installation per platform:
 - Windows: [Install Python on Windows (Anaconda)](https://medium.com/@GalarnykMichael/install-python-on-windows-anaconda-c63c7c3d1444)
 - Mac: [Install Python on Mac (Anaconda)](https://medium.com/@GalarnykMichael/install-python-on-mac-anaconda-ccd9f2014072)
 
-2. Docker
+#### 2. Docker
 
-Details will be added shortly
+Docker is a containerisation technology that enables you to run 
+Deep Learning code in environments that are consistent with others. 
+Since container are lightweight and intended to be thrown away 
+after use, you are technically not installing anything on the 
+bare-metal.
 
+1. Tensorflow official image
+It includes
+- Tensorflow:latest CPU
+- Pillow
+- h5py
+- ipkernel
+- jupyter
+- matplotlib
+- numpy
+- pandas
+- scipy
+- sklearn
+
+1. On Mac or Linux
+
+Install on Mac: https://docs.docker.com/docker-for-mac/install/
+Install on Linux: https://docs.docker.com/install/
+
+```sh
+$ cd deepcollege/deeplearning
+$ docker run -v $(pwd):/notebooks -it -p 8888:8888 gcr.io/tensorflow/tensorflow
+```
+
+2. On Windows *Powershell*
+
+Install on Windows: https://docs.docker.com/docker-for-windows/
+
+```sh
+$ docker-machine start  # if you are using docker toolbox
+$ docker-machine env --shell powershell default | Invoke-Expression
+$ cd deepcollege/deeplearning
+$ docker run -v /c/Users/<your_user_name>/Desktop/deepcollege/deeplearning:/notebooks -it -p 8888:8888 gcr.io/tensorflow/tensorflow
+```
+
+Docker tool-box users tip:
+1. When you are mounting volumes, you must convert 
+path such as `C://Users/Desktop/code` into `/c/Users/Desktop/code`
 
 ### How do you contribute?
 
