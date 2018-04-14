@@ -47,6 +47,7 @@ This project aims to create a collection of Jupyter notebooks discussing importa
 - StarGAN
 - CycleGAN
 - Reinforcement learning
+- Chatbot
 
 ### Pre-requesties
 
