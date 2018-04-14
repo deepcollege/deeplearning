@@ -159,6 +159,7 @@ class DCGAN:
 
     def fit(self, X, epochs=6000, batch_size=64):
         for i in range(epochs):
+            print('running epoch ', i)
             train_d = True
             train_g = True
             keep_prob_train = 0.6
@@ -205,16 +206,17 @@ class DCGAN:
                                    self.keep_prob: keep_prob_train,
                                    self.is_training: True})
                     # Showing sample image
-            if not i % 50:
-                gen_sample = self.sess.run(self.g,
-                    feed_dict={self.noise: n, self.keep_prob: 1.0,
-                               self.is_training: False})
-                imgs = [img[:, :, 0] for img in gen_sample]
-                m = self.montage(imgs)
-                gen_sample = m
-                plt.axis('off')
-                plt.imshow(gen_sample, cmap='gray')
-                plt.show()
+                if not i % 50:
+                    print('Showing GEN montage at epoch ', i)
+                    gen_sample = self.sess.run(self.g,
+                        feed_dict={self.noise: n, self.keep_prob: 1.0,
+                                   self.is_training: False})
+                    imgs = [img[:, :, 0] for img in gen_sample]
+                    m = self.montage(imgs)
+                    gen_sample = m
+                    plt.axis('off')
+                    plt.imshow(gen_sample, cmap='gray')
+                    plt.show()
 
 
 def mnist():
