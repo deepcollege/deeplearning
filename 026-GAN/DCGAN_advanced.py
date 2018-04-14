@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 
+
 class DCGAN:
     def __init__(self,
                  img_length,
@@ -30,12 +31,12 @@ class DCGAN:
             dtype=tf.float32, shape=[None, self.latent_dims])
         self.is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
-        g = self.build_generator(
+        self.g = self.build_generator(
             self.noise, keep_prob, self.is_training, g_sizes=g_sizes)
         d_real = self.build_discriminator(
             self.real_images, reuse=None, keep_prob=keep_prob, d_sizes=d_sizes)
         d_fake = self.build_discriminator(
-            g, reuse=True, keep_prob=keep_prob, d_sizes=d_sizes)
+            self.g, reuse=True, keep_prob=keep_prob, d_sizes=d_sizes)
 
         vars_g = [var for var in tf.trainable_variables() if 'gen' in var.name]
         vars_d = [var for var in tf.trainable_variables() if 'disc' in var.name]
@@ -57,6 +58,23 @@ class DCGAN:
 
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
+
+    def montage(self, images):
+        if isinstance(images, list):
+            images = np.array(images)
+        img_h = images.shape[1]
+        img_w = images.shape[2]
+        n_plots = int(np.ceil(np.sqrt(images.shape[0])))
+        m = np.ones((images.shape[1] * n_plots + n_plots + 1,
+                     images.shape[2] * n_plots + n_plots + 1)) * 0.5
+        for i in range(n_plots):
+            for j in range(n_plots):
+                this_filter = i * n_plots + j
+                if this_filter < images.shape[0]:
+                    this_img = images[this_filter]
+                    m[1 + i + i * img_h:1 + i + (i + 1) * img_h,
+                    1 + j + j * img_w:1 + j + (j + 1) * img_w] = this_img
+        return m
 
     def lrelu(self, x):
         return tf.maximum(x, tf.multiply(x, 0.2))
@@ -144,10 +162,11 @@ class DCGAN:
             train_d = True
             train_g = True
             keep_prob_train = 0.6
+            # Creating noise
+            n = np.random.uniform(0.0, 1.0,
+                                  [batch_size, self.n_noise]).astype(
+                np.float32)
             for j in range(batch_size):
-                # Creating noise
-                n = np.random.uniform(0.0, 1.0,
-                                      [batch_size, self.n_noise]).astype(np.float32)
                 # Grabbing next batch
                 batch_X = X[j * batch_size:(j + 1) * batch_size]
                 batch_X = np.reshape(batch_X, newshape=[-1, 28, 28, 1])
@@ -185,6 +204,17 @@ class DCGAN:
                         feed_dict={self.noise: n,
                                    self.keep_prob: keep_prob_train,
                                    self.is_training: True})
+                    # Showing sample image
+            if not i % 50:
+                gen_sample = self.sess.run(self.g,
+                    feed_dict={self.noise: n, self.keep_prob: 1.0,
+                               self.is_training: False})
+                imgs = [img[:, :, 0] for img in gen_sample]
+                m = self.montage(imgs)
+                gen_sample = m
+                plt.axis('off')
+                plt.imshow(gen_sample, cmap='gray')
+                plt.show()
 
 
 def mnist():
