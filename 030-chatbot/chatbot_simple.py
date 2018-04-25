@@ -105,36 +105,53 @@ for answer in clean_answers:
 Step 7: Same as step 6 but against answer
 '''
 
-# Creating two dictionaries that map the questions words and the answer words
+# Step 8: Creating two dictionaries that map the questions words and the answer words
 threshold_questions = 20
-questions_words_2_int = {}
+questions_words_2_ints = {}
 word_number = 0
 for word, count in word2count.items():
     if count >= threshold_questions:
-        questions_words_2_int[word] = word_number
+        questions_words_2_ints[word] = word_number
         word_number += 1
 
-print(questions_words_2_int)
-exit()
+'''
+Step 8:
+If word count of a word in word2count is greater than the threshold, add it to
+questions_word_2_int
+e.g. u'cliff': 2176
+'''
 
+# Step 9: Same as step 8 but for answers
 threshold_answers = 20
-answers_words_2_int = {}
+answers_words_2_ints = {}
 word_number = 0
 for word, count in word2count.items():
     if count >= threshold_answers:
-        answers_words_2_int[word] = word_number
+        answers_words_2_ints[word] = word_number
         word_number += 1
 
-# Adding the last tokens to these two dictionaries
+# Step 10: Adding the last tokens to these two dictionaries
 tokens = ['<PAD>', '<EOS>', '<OUT>', '<SOS>']
 for token in tokens:
-    questions_words_2_int[token] = len(questions_words_2_int) + 1
+    questions_words_2_ints[token] = len(questions_words_2_ints) + 1
 
 for token in tokens:
-    answers_words_2_int[token] = len(answers_words_2_int) + 1
+    answers_words_2_ints[token] = len(answers_words_2_ints) + 1
 
-# Creating the inverse dictionary of the answer 2 words 2 int dictionary
-answers_words_2_int = {w: w_i for w, w_i, in answers_words_2_int.items()}
+'''
+Step 10:
+Adding word count (len(questions_words_2_int) + 1) for each token
+'''
+
+# Step 11: Creating an inverse dictionary of the answer 2 words 2 int dictionary
+answers_ints_2_words = {w_i: w for w, w_i, in answers_words_2_ints.items()}
+'''
+Step 11:
+u'kinda': 2175 -> u'2175': 'kinda'
+'''
+
+print(answers_ints_2_words)
+exit()
 
 # Adding the EOS to every answer
 for i in range(len(clean_answers)):
@@ -146,22 +163,20 @@ questions_to_int = []
 for question in clean_questions:
     ints = []
     for word in question.split():
-        if word not in questions_words_2_int:
-            ints.append(questions_words_2_int['<OUT>'])
+        if word not in questions_words_2_ints:
+            ints.append(questions_words_2_ints['<OUT>'])
         else:
-            ints.append(questions_words_2_int[word])
+            ints.append(questions_words_2_ints[word])
     questions_to_int.append(ints)
 
-print(questions_to_int[0])
 answers_to_int = []
 for answer in clean_answers:
     ints = []
-    print('checking ', answers_words_2_int)
     for word in answer.split():
-        if word not in answers_words_2_int:
-            ints.append(answers_words_2_int['<OUT>'])
+        if word not in answers_words_2_ints:
+            ints.append(answers_words_2_ints['<OUT>'])
         else:
-            ints.append(answers_words_2_int[word])
+            ints.append(answers_words_2_ints[word])
     answers_to_int.append(ints)
 
 # Sorting questions and answers by the length of questions
