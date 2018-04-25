@@ -10,24 +10,44 @@ conversations = io.open('./inputs/movie_conversations.txt', encoding='utf8', err
 
 id2line = {}
 
+# Step 1: Creating a dict that maps each line to its id
 for line in lines:
     _line = line.split(' +++$+++ ')
     if len(_line) == 5:
         id2line[_line[0]] = _line[4]
 
-# Creating a list of all of the conversations
+'''
+Result of Step 1:
+Original: L1045 +++$+++ u0 +++$+++ m0 +++$+++ BIANCA +++$+++ They do not!
+Result: { 'L1045': 'They do not!' }
+'''
+
+# Step 2: Creating a list of all of the conversations
 conversations_ids = []
 for conversation in conversations[:-1]:
     # Example: u0 +++$+++ u2 +++$+++ m0 +++$+++ ['L194', 'L195', 'L196', 'L197']
     _convo = conversation.split(' +++$+++ ')[-1][1:-1].replace("'", '').replace(' ', '')
     conversations_ids.append(_convo.split(','))
 
+'''
+Step 2:
+Original: u0 +++$+++ u2 +++$+++ m0 +++$+++ ['L194', 'L195', 'L196', 'L197']
+Result: Get the lat "['L194', 'L195', 'L196', 'L197']" then replaces [], '' and empty spaces
+> Then split the result and create ['L194', 'L195', 'L196', 'L197'] < Python array
+'''
+
+# Step 3: Creates questions and answers sequence
 questions = []
 answers = []
 for conversation in conversations_ids:
     for i in range(len(conversation) - 1):
         questions.append(id2line[conversation[i]])
         answers.append(id2line[conversation[i + 1]])
+
+'''
+Step 3:
+Constructs questions and answers using id2line and conversation array
+'''
 
 
 # Doing a first cleaning of the texts
@@ -49,17 +69,19 @@ def clean_text(text):
     return text
 
 
-# cleaning the questions
+# Step 4: cleaning the questions
 clean_questions = []
 for question in questions:
     clean_questions.append(clean_text(question))
 
 
+# Step 5: Clean the answers
 clean_answers = []
 for answer in answers:
     clean_answers.append(clean_text(answer))
 
-# Creating a dictionary that maps each word to its number of occurences
+
+# Step 6: Creating a dictionary that maps each word to its number of occurences
 word2count = {}
 for question in clean_questions:
     for word in question.split():
@@ -67,6 +89,11 @@ for question in clean_questions:
             word2count[word] = 1
         else:
             word2count[word] += 1
+'''
+Step 6:
+For example, for a question: can we make this quick  roxanne korrine and andrew barrett are having an incredibly horrendous public break up on the quad  again
+It counts each word occurence such as "can" and accumulates the count into word2count dict
+'''
 
 for answer in clean_answers:
     for word in answer.split():
@@ -74,29 +101,32 @@ for answer in clean_answers:
             word2count[word] = 1
         else:
             word2count[word] += 1
+'''
+Step 7: Same as step 6 but against answer
+'''
 
-# Creating two dictionaries that map the questions words and the naswers words
-threshold = 20
+# Creating two dictionaries that map the questions words and the answer words
+threshold_questions = 20
 questions_words_2_int = {}
 word_number = 0
 for word, count in word2count.items():
-    if count >= threshold:
+    if count >= threshold_questions:
         questions_words_2_int[word] = word_number
         word_number += 1
 
+print(questions_words_2_int)
+exit()
+
+threshold_answers = 20
 answers_words_2_int = {}
 word_number = 0
 for word, count in word2count.items():
-    if count >= threshold:
+    if count >= threshold_answers:
         answers_words_2_int[word] = word_number
         word_number += 1
 
 # Adding the last tokens to these two dictionaries
-T_PAD = '<PAD>'
-T_EOS = '<EOS>'
-T_OUT = '<OUT>'
-T_SOS = '<SOS>'
-tokens = [T_PAD, T_EOS, T_OUT, T_SOS]
+tokens = ['<PAD>', '<EOS>', '<OUT>', '<SOS>']
 for token in tokens:
     questions_words_2_int[token] = len(questions_words_2_int) + 1
 
@@ -104,31 +134,42 @@ for token in tokens:
     answers_words_2_int[token] = len(answers_words_2_int) + 1
 
 # Creating the inverse dictionary of the answer 2 words 2 int dictionary
-answers_words_2_int = {w_i: w for w, w_i, in answers_words_2_int.items()}
+answers_words_2_int = {w: w_i for w, w_i, in answers_words_2_int.items()}
 
-# Adding the EOS
+# Adding the EOS to every answer
 for i in range(len(clean_answers)):
-    clean_answers[i] += ' {t}'.format(t=T_EOS)
+    clean_answers[i] += ' <EOS>'
 
-# Translate all the words into associated int value from word 2 int
+# Translating all the questions and answers into integers
+# and replacing all the words that were filtered out by OUT
 questions_to_int = []
 for question in clean_questions:
     ints = []
     for word in question.split():
         if word not in questions_words_2_int:
-            ints.append(questions_words_2_int[T_OUT])
+            ints.append(questions_words_2_int['<OUT>'])
         else:
             ints.append(questions_words_2_int[word])
     questions_to_int.append(ints)
-answers_to_int = []
 
+print(questions_to_int[0])
+answers_to_int = []
 for answer in clean_answers:
     ints = []
+    print('checking ', answers_words_2_int)
     for word in answer.split():
         if word not in answers_words_2_int:
-            ints.append(answers_words_2_int[T_OUT])
+            ints.append(answers_words_2_int['<OUT>'])
         else:
             ints.append(answers_words_2_int[word])
     answers_to_int.append(ints)
 
+# Sorting questions and answers by the length of questions
+sorted_clean_questions = []
+sorted_clean_answers = []
+for length in range(1, 25 + 1):
+    for i in enumerate(questions_to_int):
+        if len(i[1]) == length:
+            sorted_clean_questions.append(questions_to_int[i[0]])
+            sorted_clean_answers.append(answers_to_int[i[0]])
 
