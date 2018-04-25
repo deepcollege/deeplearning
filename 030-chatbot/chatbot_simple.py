@@ -150,14 +150,15 @@ Step 11:
 u'kinda': 2175 -> u'2175': 'kinda'
 '''
 
-print(answers_ints_2_words)
-exit()
-
-# Adding the EOS to every answer
+# Step 12: Adding the EOS to every answer
 for i in range(len(clean_answers)):
     clean_answers[i] += ' <EOS>'
 
-# Translating all the questions and answers into integers
+'''
+Step 12: On each clean_answer, it append ' <EOS>'
+'''
+
+# Step 13: Translating all the questions and answers into integers
 # and replacing all the words that were filtered out by OUT
 questions_to_int = []
 for question in clean_questions:
@@ -169,6 +170,14 @@ for question in clean_questions:
             ints.append(questions_words_2_ints[word])
     questions_to_int.append(ints)
 
+
+'''
+By looking up questions_wirds_2_ints, loop through clean_questions and try to 
+convert all words into integer. If you cannot find a word in questions_words_2_ints
+it will just use <OUT> int value
+'''
+
+# Step 13: Same as Step 12
 answers_to_int = []
 for answer in clean_answers:
     ints = []
@@ -179,7 +188,7 @@ for answer in clean_answers:
             ints.append(answers_words_2_ints[word])
     answers_to_int.append(ints)
 
-# Sorting questions and answers by the length of questions
+# Step 14: Sorting questions and answers by the length of questions
 sorted_clean_questions = []
 sorted_clean_answers = []
 for length in range(1, 25 + 1):
@@ -187,4 +196,3 @@ for length in range(1, 25 + 1):
         if len(i[1]) == length:
             sorted_clean_questions.append(questions_to_int[i[0]])
             sorted_clean_answers.append(answers_to_int[i[0]])
-
