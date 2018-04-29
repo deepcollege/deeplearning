@@ -6,6 +6,8 @@ y = np.array(list(map(lambda n: n*n, x)))
 
 def compute_cost_function(m, t0, t1, x, y):
     return 1/2/m * sum([(t0 + t1* np.asarray([x[i]]) - y[i])**2 for i in range(m)])
+
+
 def gradient_descent(x, y, alpha = 0.01, ep=0.0001, max_iter=1500):
     converged = False
     iter = 0
