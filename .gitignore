@@ -24,3 +24,6 @@
 
 # Kaggle folders
 inputs/
+
+# Logs
+log/
