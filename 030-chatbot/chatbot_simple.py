@@ -480,3 +480,37 @@ training_questions = sorted_clean_questions[training_validation_split:]
 training_answers = sorted_clean_answers[training_validation_split:]
 validation_questions = sorted_clean_questions[:training_validation_split]
 validation_answers = sorted_clean_answers[:training_validation_split]
+
+# Training
+batch_index_check_training_loss = 100
+batch_index_check_validation_loss = (len(training_questions) // batch_size // 2) - 1
+total_training_loss_error = 0
+total_validation_loss_error = []
+early_stopping_check = 0
+early_stopping_stop = 1000
+checkpoint = 'chatbot_weights.ckpt'
+session.run(tf.global_variable_initializer())
+
+for epoch in range(1, epochs + 1):
+    for batch_index, (padded_question_in_batch, padded_answers_in_batch) in enumerate(split_into_batches(training_questions, training_answers, batch_size)):
+        starting_time = time.time()
+        _, batch_training_loss_error = session.run(
+            [optimizer_gradient_clipping, loss_error],
+            {
+                inputs: padded_question_in_batch,
+                targets: padded_answers_in_batch,
+                lr: learning_rate,
+                sequence_length: padded_answers_in_batch.shape[1],
+                keep_prob: keep_probability
+            }
+        )
+
+        total_training_loss_error += batch_training_loss_error
+        ending_time = time.time()
+        batch_time = ending_time - starting_time
+        # Every batch_index_check_training_loss (e.g. 100), we will print the error
+        if batch_index % batch_index_check_training_loss == 0:
+            # :>3 means 3 figures; :>4 means 4 figures; .3f means float with 3 decimals
+            print('Epoch: {:>3}, Batch: {:>4}/{}, Training Loss Error: {:>6.3f}')
+
+
