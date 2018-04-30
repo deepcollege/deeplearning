@@ -13,10 +13,10 @@ else:
     print("You are using a CPU version of TF")
 
 lines = io.open(
-    './inputs/movie_lines.txt', encoding='utf8',
+    '/inputs/movie_lines.txt', encoding='utf8',
     errors='ignore').read().split('\n')
 conversations = io.open(
-    './inputs/movie_conversations.txt', encoding='utf8',
+    '/inputs/movie_conversations.txt', encoding='utf8',
     errors='ignore').read().split('\n')
 
 id2line = {}
@@ -474,12 +474,13 @@ for epoch in range(1, epochs + 1):
             print('Epoch: {:>3}, '
                   'Batch: {:>4}/{}, '
                   'Training Loss Error: {:>6.3f}, '
-                  'Training Time on 100 Batches: {:d} seconds'.format(
-                      epoch, epochs, batch_index,
-                      len(training_questions) // batch_size,
-                      total_training_loss_error /
-                      batch_index_check_training_loss,
-                      int(batch_time * batch_index_check_training_loss)))
+                  'Training Time on 100 Batches: {:d} seconds'.format(epoch,
+                                                                      epochs,
+                                                                      batch_index,
+                                                                      len(training_questions) // batch_size,
+                                                                      total_training_loss_error / batch_index_check_training_loss,
+                                                                      int(float(batch_time * batch_index_check_training_loss))
+                                                                    ))
             # Recompute total training loss error because we are done with 100 batches
             total_training_loss_error = 0
 

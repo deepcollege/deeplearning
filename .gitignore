@@ -27,3 +27,6 @@ inputs/
 
 # Logs
 log/
+
+# Floydhub
+.floydexpt
