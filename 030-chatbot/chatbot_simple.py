@@ -471,16 +471,14 @@ for epoch in range(1, epochs + 1):
         # At every batch_index_check_training_loss (e.g. 100), we will print the error
         if batch_index % batch_index_check_training_loss == 0:
             # :>3 means 3 figures; :>4 means 4 figures; .3f means float with 3 decimals
-            print('Epoch: {:>3}, '
-                  'Batch: {:>4}/{}, '
-                  'Training Loss Error: {:>6.3f}, '
-                  'Training Time on 100 Batches: {:d} seconds'.format(epoch,
-                                                                      epochs,
-                                                                      batch_index,
-                                                                      len(training_questions) // batch_size,
-                                                                      total_training_loss_error / batch_index_check_training_loss,
-                                                                      int(float(batch_time * batch_index_check_training_loss))
-                                                                    ))
+            # TODO: batch_time * batch_index_check_training_loss is complaining about it's still a float?
+            print('Epoch: {:>3}/{}, Batch: {:>4}/{}, Training Loss Error: {:>6.3f}, Training Time on 100 Batches: {:d} seconds'.format(
+                epoch,
+                epochs,
+                batch_index,
+                len(training_questions) // batch_size,
+                total_training_loss_error / batch_index_check_training_loss,
+                int(batch_time * batch_index_check_training_loss)))
             # Recompute total training loss error because we are done with 100 batches
             total_training_loss_error = 0
 
