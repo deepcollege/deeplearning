@@ -89,6 +89,8 @@ clean_answers = []
 for answer in answers:
     clean_answers.append(clean_text(answer))
 
+print('Step 4, cleaning all the answers ', clean_answers)
+
 # Step 6: Creating a dictionary that maps each word to its number of occurences
 word2count = {}
 for question in clean_questions:
@@ -344,13 +346,17 @@ def seq2seq_model(inputs, targets, keep_prob, batch_size, sequence_length,
         answers_num_words + 1,
         encoder_embedding_size,
         initializer=tf.random_uniform_initializer(0, 1))
-    encoder_state = encoder_rnn(encoder_embedded_input, rnn_size, num_layers,
+    encoder_state = encoder_rnn(encoder_embedded_input,
+                                rnn_size, num_layers,
                                 keep_prob, sequence_length)
-    preprocessed_targets = preprocess_targets(targets, questions_words_2_ints,
+    preprocessed_targets = preprocess_targets(targets,
+                                              questions_words_2_ints,
                                               batch_size)
     decoder_embeddings_matrix = tf.Variable(
-        tf.random_uniform([questions_num_words + 1, decoder_embedding_size], 0,
-                          1))
+        tf.random_uniform(
+            [questions_num_words + 1, decoder_embedding_size], 0, 1
+        )
+    )
     decoder_embedded_input = tf.nn.embedding_lookup(decoder_embeddings_matrix,
                                                     preprocessed_targets)
     training_predictions, test_predictions = decoder_rnn(
@@ -440,6 +446,7 @@ validation_questions = sorted_clean_questions[:training_validation_split]
 validation_answers = sorted_clean_answers[:training_validation_split]
 
 # Training
+
 batch_index_check_training_loss = 100
 batch_index_check_validation_loss = (
     len(training_questions) // batch_size // 2) - 1
@@ -448,7 +455,12 @@ list_validation_loss_error = []
 early_stopping_check = 0
 early_stopping_stop = 1000
 checkpoint = '/output/chatbot_weights.ckpt'
+
+writer = tf.summary.FileWriter('/output/chatbot-tfboard/2')
+writer.add_graph(session.graph)
+
 session.run(tf.global_variables_initializer())
+
 
 for epoch in range(1, epochs + 1):
     for batch_index, (padded_question_in_batch,
@@ -535,3 +547,48 @@ for epoch in range(1, epochs + 1):
         break
 
 print('Game Over')
+
+
+###### Part 4 - TESTING THE SEQ2SEQ
+
+'''
+# Loading the weights and Running the session
+ouput_checkpoint = './output/chatbot_weights.ckpt'
+session = tf.InteractiveSession()
+session.run(tf.global_variables_initializer())
+saver = tf.train.Saver()
+saver.restore(session, ouput_checkpoint)
+
+
+# Converting the questions from strings to list of encoding integers
+def convert_string2int(question, word2int):
+    question = clean_text(question)
+    return [word2int.get(word, word2int['<OUT>']) for word in question.split()]
+
+
+while(True):
+    question = raw_input('You: ')
+    if question == 'Goodbye':
+        break
+    question = convert_string2int(question, questions_words_2_ints)
+    question = question + [questions_words_2_ints['<PAD>']] * (25 - len(question))
+    fake_batch = np.zeros((batch_size, 25))
+    fake_batch[0] = question
+    # We are interested in the first element
+    predicted_answer = session.run(test_predictions, {inputs: fake_batch, keep_prob: 0.5})[0]
+    answer = ''
+    # Getting values of each token ID
+    for i in np.argmax(predicted_answer, 1):
+        if answers_ints_2_words[i] == 'i':
+            token = 'I'
+        elif answers_ints_2_words[i] == '<EOS>':
+            token = '.'
+        elif answers_ints_2_words[i] == '<OUT>':
+            token = 'out'
+        else:
+            token = ' ' + answers_ints_2_words[i]
+        answer += token
+        if token == '.':
+            break
+    print('Chatbot:', answer)
+'''
