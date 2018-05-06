@@ -89,8 +89,6 @@ clean_answers = []
 for answer in answers:
     clean_answers.append(clean_text(answer))
 
-print('Step 4, cleaning all the answers ', clean_answers)
-
 # Step 6: Creating a dictionary that maps each word to its number of occurences
 word2count = {}
 for question in clean_questions:
