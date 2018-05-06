@@ -24,3 +24,10 @@
 
 # Kaggle folders
 inputs/
+output/
+
+# Logs
+log/
+
+# Floydhub
+.floydexpt
