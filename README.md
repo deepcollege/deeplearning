@@ -114,6 +114,12 @@ $ cd deepcollege/deeplearning
 $ docker run -v /c/Users/<your_user_name>/Desktop/deepcollege/deeplearning:/notebooks -it -p 8888:8888 gcr.io/tensorflow/tensorflow
 ```
 
+
+#### GPU docker tensorflow
+
+https://github.com/NVIDIA/nvidia-docker
+
+
 Docker tool-box users tip:
 1. When you are mounting volumes, you must convert 
 path such as `C://Users/Desktop/code` into `/c/Users/Desktop/code`
