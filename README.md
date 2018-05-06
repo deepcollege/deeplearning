@@ -119,6 +119,13 @@ $ docker run -v /c/Users/<your_user_name>/Desktop/deepcollege/deeplearning:/note
 
 https://github.com/NVIDIA/nvidia-docker
 
+Example Docker command to run GPU based training using 030-chatbot example
+
+```bash
+sudo nvidia-docker run -it -v $(pwd)/chatbot_simple.py:/notebooks -v /inputs:/inputs tensorflow/tensorflow:1.0.0-gpu "pthon /notebooks/ch
+atbot_simple.py"
+```
+
 
 Docker tool-box users tip:
 1. When you are mounting volumes, you must convert 
