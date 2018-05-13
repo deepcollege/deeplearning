@@ -212,6 +212,7 @@ def model_inputs():
 
 # Preprocessing the targets
 def preprocess_targets(targets, word2int, batch_size):
+    # You can see this requirement from the seq2seq diagram
     left_side = tf.fill([batch_size, 1], word2int['<SOS>'])
     # Grab everything except for the last token
     # Answers without the end
