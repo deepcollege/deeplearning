@@ -23,7 +23,7 @@
 .csv
 
 # python
-.pyc
+*.pyc
 
 # Kaggle folders
 inputs/
