@@ -64,6 +64,7 @@ class Seq2Seq:
         # Optimization
         with tf.name_scope('optimizaiton'):
             # Loss
+            # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
             loss_error = tf.contrib.seq2seq.sequence_loss(
                 training_predictions,
                 targets,
