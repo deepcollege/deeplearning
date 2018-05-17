@@ -231,7 +231,8 @@ training_predictions, test_predictions = seq2seq_model(
 with tf.name_scope('optimizaiton'):
     # Loss
     loss_error = tf.contrib.seq2seq.sequence_loss(
-        training_predictions, targets,
+        training_predictions,
+        targets,
         tf.ones([input_shape[0], sequence_length]))
     optimizer = tf.train.AdamOptimizer(learning_rate)
     gradients = optimizer.compute_gradients(loss_error)

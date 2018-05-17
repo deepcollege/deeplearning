@@ -23,7 +23,7 @@ class Seq2Seq:
       rnn_size=512,
       # Number of encoder and decoder layers
       num_layers=3,
-      learning_rate=0.01
+      learning_rate=0.01,
     ):
         self.batch_size = batch_size
         self.sequence_length = sequence_length
@@ -35,7 +35,8 @@ class Seq2Seq:
         self.num_layers = num_layers
         self.learning_rate = learning_rate
 
-    def compile(self):
+    def compile(self,
+                mode='training'):
         # Initiating graph inputs
         inputs, targets, lr, keep_prob = self.model_inputs()
 
@@ -64,7 +65,8 @@ class Seq2Seq:
         with tf.name_scope('optimizaiton'):
             # Loss
             loss_error = tf.contrib.seq2seq.sequence_loss(
-                training_predictions, targets,
+                training_predictions,
+                targets,
                 tf.ones([input_shape[0], self.sequence_length]))
             optimizer = tf.train.AdamOptimizer(self.learning_rate)
             gradients = optimizer.compute_gradients(loss_error)
@@ -95,7 +97,12 @@ class Seq2Seq:
         preprocessed_targets = tf.concat([left_side, right_side], 1)
         return preprocessed_targets
 
-    def encoder_rnn(self, rnn_inputs, rnn_size, num_layers, keep_prob, sequence_length):
+    def encoder_rnn(self,
+                    rnn_inputs,
+                    rnn_size,
+                    num_layers,
+                    keep_prob,
+                    sequence_length):
         with tf.variable_scope('encoding') as encoding_scope:
             ''' Creating the encoder RNN layer '''
             # with tf.variable_scope('encoding') as encoding_scope:
@@ -119,9 +126,15 @@ class Seq2Seq:
 
 
     # Decoding the training set
-    def decode_training_set(self, encoder_state, decoder_cell, decoder_embedded_input,
-                            sequence_length, decoding_scope, output_function,
-                            keep_prob, batch_size):
+    def decode_training_set(self,
+                            encoder_state,
+                            decoder_cell,
+                            decoder_embedded_input,
+                            sequence_length,
+                            decoding_scope,
+                            output_function,
+                            keep_prob,
+                            batch_size):
         attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
 
         attention_keys, attention_values, attention_score_function, attention_construct_function = tf.contrib.seq2seq.prepare_attention(
@@ -148,10 +161,18 @@ class Seq2Seq:
 
         return output_function(decoder_output_dropout)
 
-
-    def decode_test_set(self, encoder_state, decoder_cell, decoder_embeddings_matrix,
-                        sos_id, eos_id, maximum_length, num_words, decoding_scope,
-                        output_function, keep_prob, batch_size):
+    def decode_test_set(self,
+                        encoder_state,
+                        decoder_cell,
+                        decoder_embeddings_matrix,
+                        sos_id,
+                        eos_id,
+                        maximum_length,
+                        num_words,
+                        decoding_scope,
+                        output_function,
+                        keep_prob,
+                        batch_size):
         # TODO: Find out what exactly this part of the code does
         # Decoding the test/validation set
         attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
@@ -183,11 +204,18 @@ class Seq2Seq:
 
         return test_predictions
 
-
-    # Creating the decoder RNN
-    def decoder_rnn(self, decoder_embedded_input, decoder_embedding_matrix,
-                    encoder_state, num_words, sequence_length, rnn_size,
-                    num_layers, word2int, keep_prob, batch_size):
+    def decoder_rnn(self,
+                    decoder_embedded_input,
+                    decoder_embedding_matrix,
+                    encoder_state,
+                    num_words,
+                    sequence_length,
+                    rnn_size,
+                    num_layers,
+                    word2int,
+                    keep_prob,
+                    batch_size):
+        # Creating the decoder RNN
         with tf.variable_scope('decoding') as decoding_scope:
             lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
             lstm_dropout = tf.contrib.rnn.DropoutWrapper(
@@ -202,25 +230,40 @@ class Seq2Seq:
                 scope=decoding_scope,
                 weights_initializer=weights,
                 biases_initializer=biases)
+            # training_predictions = logits
+            # What is logits layer?
+            # https://stackoverflow.com/questions/41455101/what-is-the-meaning-of-the-word-logits-in-tensorflow
             training_predictions = self.decode_training_set(
-                encoder_state, decoder_cell, decoder_embedded_input,
-                sequence_length, decoding_scope, output_function, keep_prob,
+                encoder_state,
+                decoder_cell,
+                decoder_embedded_input,
+                sequence_length,
+                decoding_scope,
+                output_function,
+                keep_prob,
                 batch_size)
+
             decoding_scope.reuse_variables()
             # SOS -> start of sentence
             # EOS -> End of sentence
             test_predictions = self.decode_test_set(
-                encoder_state, decoder_cell, decoder_embedding_matrix,
-                word2int['<SOS>'], word2int['<EOS>'], sequence_length - 1,
-                num_words, decoding_scope, output_function, keep_prob, batch_size)
+                encoder_state,
+                decoder_cell,
+                decoder_embedding_matrix,
+                word2int['<SOS>'],
+                word2int['<EOS>'],
+                sequence_length - 1,
+                num_words,
+                decoding_scope,
+                output_function,
+                keep_prob, batch_size)
             return training_predictions, test_predictions
 
-
-    # building seq2seq model
     def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
                       answers_num_words, questions_num_words,
                       encoder_embedding_size, decoder_embedding_size, rnn_size,
                       num_layers, questions_words_2_ints):
+        # building seq2seq model
         # Maps a sequence of symbols to a sequence of embeddings
         encoder_embedded_input = tf.contrib.layers.embed_sequence(
             inputs,
@@ -241,9 +284,15 @@ class Seq2Seq:
         decoder_embedded_input = tf.nn.embedding_lookup(decoder_embeddings_matrix,
                                                         preprocessed_targets)
         training_predictions, test_predictions = self.decoder_rnn(
-            decoder_embedded_input, decoder_embeddings_matrix, encoder_state,
-            questions_num_words, sequence_length, rnn_size, num_layers,
-            questions_words_2_ints, keep_prob, batch_size)
+            decoder_embedded_input,
+            decoder_embeddings_matrix,
+            encoder_state,
+            questions_num_words,
+            sequence_length,
+            rnn_size,
+            num_layers,
+            questions_words_2_ints,
+            keep_prob, batch_size)
         return training_predictions, test_predictions
 
 
