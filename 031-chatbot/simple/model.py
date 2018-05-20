@@ -104,29 +104,26 @@ class Seq2Seq:
                     num_layers,
                     keep_prob,
                     sequence_length):
-        with tf.variable_scope('encoding') as encoding_scope:
-            ''' Creating the encoder RNN layer '''
-            # with tf.variable_scope('encoding') as encoding_scope:
-            # What does BasicLSTMCell do? https://stackoverflow.com/questions/46134806/what-does-basiclstmcell-do
-            # Why LSTM layer is not called "layer"? https://github.com/tensorflow/tensorflow/issues/14693
-            lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
-            # Deactivating certain portions of cells
-            lstm_dropout = tf.contrib.rnn.DropoutWrapper(
-                lstm, input_keep_prob=keep_prob)
+        ''' Creating the encoder RNN layer '''
+        # with tf.variable_scope('encoding') as encoding_scope:
+        # What does BasicLSTMCell do? https://stackoverflow.com/questions/46134806/what-does-basiclstmcell-do
+        # Why LSTM layer is not called "layer"? https://github.com/tensorflow/tensorflow/issues/14693
+        lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
+        # Deactivating certain portions of cells
+        lstm_dropout = tf.contrib.rnn.DropoutWrapper(
+            lstm, input_keep_prob=keep_prob)
 
-            encoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * num_layers)
+        encoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * num_layers)
 
-            # Reference: https://www.tensorflow.org/api_docs/python/tf/nn/bidirectional_dynamic_rnn
-            encoder_output, encoder_state = tf.nn.bidirectional_dynamic_rnn(
-                cell_fw=encoder_cell,
-                cell_bw=encoder_cell,
-                sequence_length=sequence_length,
-                inputs=rnn_inputs,
-                dtype=tf.float32)
-            return encoder_state
+        # Reference: https://www.tensorflow.org/api_docs/python/tf/nn/bidirectional_dynamic_rnn
+        encoder_output, encoder_state = tf.nn.bidirectional_dynamic_rnn(
+            cell_fw=encoder_cell,
+            cell_bw=encoder_cell,
+            sequence_length=sequence_length,
+            inputs=rnn_inputs,
+            dtype=tf.float32)
+        return encoder_state
 
-
-    # Decoding the training set
     def decode_training_set(self,
                             encoder_state,
                             decoder_cell,
@@ -136,6 +133,10 @@ class Seq2Seq:
                             output_function,
                             keep_prob,
                             batch_size):
+        '''
+        We need decode_training_set to decode the encoded questions and
+        answers of the training set (second part of the Seq2Seq model)
+        '''
         attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
 
         attention_keys, attention_values, attention_score_function, attention_construct_function = tf.contrib.seq2seq.prepare_attention(
@@ -174,6 +175,11 @@ class Seq2Seq:
                         output_function,
                         keep_prob,
                         batch_size):
+        '''
+        we need decode_test_set to decode the encoded questions and answers of
+        either the validation set or simply new predictions that are not used
+        anyway in the training.
+        '''
         # TODO: Find out what exactly this part of the code does
         # Decoding the test/validation set
         attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
@@ -215,85 +221,93 @@ class Seq2Seq:
                     num_layers,
                     word2int,
                     keep_prob,
-                    batch_size):
+                    batch_size,
+                    decoding_scope):
         # Creating the decoder RNN
-        with tf.variable_scope('decoding') as decoding_scope:
-            lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
-            lstm_dropout = tf.contrib.rnn.DropoutWrapper(
-                lstm, input_keep_prob=keep_prob)
-            decoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * num_layers)
-            weights = tf.truncated_normal_initializer(stddev=0.1)
-            biases = tf.zeros_initializer()
-            output_function = lambda x: tf.contrib.layers.fully_connected(
-                x,
-                num_words,
-                None,
-                scope=decoding_scope,
-                weights_initializer=weights,
-                biases_initializer=biases)
-            # training_predictions = logits
-            # What is logits layer?
-            # https://stackoverflow.com/questions/41455101/what-is-the-meaning-of-the-word-logits-in-tensorflow
-            training_predictions = self.decode_training_set(
-                encoder_state,
-                decoder_cell,
-                decoder_embedded_input,
-                sequence_length,
-                decoding_scope,
-                output_function,
-                keep_prob,
-                batch_size)
+        lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
+        lstm_dropout = tf.contrib.rnn.DropoutWrapper(
+            lstm, input_keep_prob=keep_prob)
+        decoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * num_layers)
+        weights = tf.truncated_normal_initializer(stddev=0.1)
+        biases = tf.zeros_initializer()
+        output_function = lambda x: tf.contrib.layers.fully_connected(
+            x,
+            num_words,
+            None,
+            scope=decoding_scope,
+            weights_initializer=weights,
+            biases_initializer=biases)
+        # training_predictions = logits
+        # What is logits layer?
+        # https://stackoverflow.com/questions/41455101/what-is-the-meaning-of-the-word-logits-in-tensorflow
+        training_predictions = self.decode_training_set(
+            encoder_state,
+            decoder_cell,
+            decoder_embedded_input,
+            sequence_length,
+            decoding_scope,
+            output_function,
+            keep_prob,
+            batch_size)
 
-            decoding_scope.reuse_variables()
-            # SOS -> start of sentence
-            # EOS -> End of sentence
-            test_predictions = self.decode_test_set(
-                encoder_state,
-                decoder_cell,
-                decoder_embedding_matrix,
-                word2int['<SOS>'],
-                word2int['<EOS>'],
-                sequence_length - 1,
-                num_words,
-                decoding_scope,
-                output_function,
-                keep_prob, batch_size)
-            return training_predictions, test_predictions
+        decoding_scope.reuse_variables()
+        # SOS -> start of sentence
+        # EOS -> End of sentence
+        test_predictions = self.decode_test_set(
+            encoder_state,
+            decoder_cell,
+            decoder_embedding_matrix,
+            word2int['<SOS>'],
+            word2int['<EOS>'],
+            sequence_length - 1,
+            num_words,
+            decoding_scope,
+            output_function,
+            keep_prob, batch_size)
+        return training_predictions, test_predictions
 
     def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
                       answers_num_words, questions_num_words,
                       encoder_embedding_size, decoder_embedding_size, rnn_size,
                       num_layers, questions_words_2_ints):
-        # building seq2seq model
-        # Maps a sequence of symbols to a sequence of embeddings
-        encoder_embedded_input = tf.contrib.layers.embed_sequence(
-            inputs,
-            answers_num_words + 1,
-            encoder_embedding_size,
-            initializer=tf.random_uniform_initializer(0, 1))
-        encoder_state = self.encoder_rnn(encoder_embedded_input,
-                                    rnn_size, num_layers,
-                                    keep_prob, sequence_length)
-        preprocessed_targets = self.preprocess_targets(targets,
-                                                  questions_words_2_ints,
-                                                  batch_size)
-        decoder_embeddings_matrix = tf.Variable(
-            tf.random_uniform(
-                [questions_num_words + 1, decoder_embedding_size], 0, 1
-            )
-        )
-        decoder_embedded_input = tf.nn.embedding_lookup(decoder_embeddings_matrix,
-                                                        preprocessed_targets)
-        training_predictions, test_predictions = self.decoder_rnn(
-            decoder_embedded_input,
-            decoder_embeddings_matrix,
-            encoder_state,
-            questions_num_words,
-            sequence_length,
-            rnn_size,
-            num_layers,
-            questions_words_2_ints,
-            keep_prob, batch_size)
+        with tf.variable_scope("model"):
+            # building seq2seq model
+            # Maps a sequence of symbols to a sequence of embeddings
+
+            with tf.variable_scope('encoding'):
+                encoder_embedded_input = tf.contrib.layers.embed_sequence(
+                    inputs,
+                    answers_num_words + 1,
+                    encoder_embedding_size,
+                    initializer=tf.random_uniform_initializer(0, 1))
+                encoder_state = self.encoder_rnn(encoder_embedded_input,
+                                            rnn_size, num_layers,
+                                            keep_prob, sequence_length)
+
+            with tf.variable_scope('decoding') as decoding_scope:
+                preprocessed_targets = self.preprocess_targets(targets,
+                                                               questions_words_2_ints,
+                                                               batch_size)
+                decoder_embeddings_matrix = tf.Variable(
+                    tf.random_uniform(
+                        [questions_num_words + 1, decoder_embedding_size], 0, 1
+                    )
+                )
+                decoder_embedded_input = tf.nn.embedding_lookup(decoder_embeddings_matrix,
+                                                                preprocessed_targets)
+                training_predictions, test_predictions = self.decoder_rnn(
+                    decoder_embedded_input,
+                    decoder_embeddings_matrix,
+                    encoder_state,
+                    questions_num_words,
+                    sequence_length,
+                    rnn_size,
+                    num_layers,
+                    questions_words_2_ints,
+                    keep_prob,
+                    batch_size,
+                    decoding_scope)
+
         return training_predictions, test_predictions
 
 
