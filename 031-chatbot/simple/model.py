@@ -178,7 +178,7 @@ class Seq2Seq:
         '''
         we need decode_test_set to decode the encoded questions and answers of
         either the validation set or simply new predictions that are not used
-        anyway in the training.
+         anyway in the training.
         '''
         # TODO: Find out what exactly this part of the code does
         # Decoding the test/validation set
@@ -270,11 +270,10 @@ class Seq2Seq:
                       answers_num_words, questions_num_words,
                       encoder_embedding_size, decoder_embedding_size, rnn_size,
                       num_layers, questions_words_2_ints):
-        with tf.variable_scope("model"):
-            # building seq2seq model
-            # Maps a sequence of symbols to a sequence of embeddings
-
-            with tf.variable_scope('encoding'):
+        with tf.variable_scope('model'):
+            with tf.variable_scope('encoding') as encoding_scope:
+                # building seq2seq model
+                # Maps a sequence of symbols to a sequence of embeddings
                 encoder_embedded_input = tf.contrib.layers.embed_sequence(
                     inputs,
                     answers_num_words + 1,
@@ -283,11 +282,10 @@ class Seq2Seq:
                 encoder_state = self.encoder_rnn(encoder_embedded_input,
                                             rnn_size, num_layers,
                                             keep_prob, sequence_length)
-
             with tf.variable_scope('decoding') as decoding_scope:
                 preprocessed_targets = self.preprocess_targets(targets,
-                                                               questions_words_2_ints,
-                                                               batch_size)
+                                                          questions_words_2_ints,
+                                                          batch_size)
                 decoder_embeddings_matrix = tf.Variable(
                     tf.random_uniform(
                         [questions_num_words + 1, decoder_embedding_size], 0, 1
@@ -307,7 +305,6 @@ class Seq2Seq:
                     keep_prob,
                     batch_size,
                     decoding_scope)
-
         return training_predictions, test_predictions
 
 
