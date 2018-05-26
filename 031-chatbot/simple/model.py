@@ -2,8 +2,10 @@ import tensorflow as tf
 
 
 class Seq2Seq:
-    mode='training'
-    model_hparams=None
+    mode = 'training'
+    model_hparams = None
+    session = None
+    input_shape = None
 
     def __init__(
       self,
@@ -13,6 +15,10 @@ class Seq2Seq:
 
     def compile(self,
                 mode='training'):
+        # Initiating session
+        tf.reset_default_graph()
+        self.session = self._create_session()
+
         self.mode = mode
         # Initiating graph inputs
         inputs, targets, lr, keep_prob = self.model_inputs()
@@ -21,6 +27,7 @@ class Seq2Seq:
 
         # Getting the shape of the inputs tensor
         self.input_shape = tf.shape(inputs)
+
         if self.mode == 'training':
             # Getting the training and testing predictions
             optimizer_gradient_clipping, loss_error = self._build_graph(
@@ -36,6 +43,11 @@ class Seq2Seq:
                 self.model_hparams['rnn_size'],
                 self.model_hparams['num_layers'],
                 self.model_hparams['questions_words_2_ints'])
+
+            # Init before returning
+            # TODO: Refactor
+            self.session.run(tf.global_variables_initializer())
+            self._build_tensorboard()
             return optimizer_gradient_clipping, loss_error
         elif self.mode == 'testing':
             test_predictions = self._build_graph(
@@ -52,6 +64,11 @@ class Seq2Seq:
                 self.model_hparams['rnn_size'],
                 self.model_hparams['num_layers'],
                 self.model_hparams['questions_words_2_ints'])
+            self._build_tensorboard()
+
+            # Init before returning
+            # TODO: Refactor
+            self.session.run(tf.global_variables_initializer())
             return test_predictions
         else:
             raise ValueError('Invalid mode detected!', self.mode)
@@ -144,22 +161,23 @@ class Seq2Seq:
         # Optimization
         # Loss
         # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
-        loss_error = tf.contrib.seq2seq.sequence_loss(
-            training_predictions,
-            targets,
-            tf.ones([
-                self.input_shape[0], self.model_hparams['sequence_length']
-            ]))
-        optimizer = tf.train.AdamOptimizer(self.model_hparams['learning_rate'])
-        gradients = optimizer.compute_gradients(loss_error)
-        # Gradient clipping
-        clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
-                              grad_variable)
-                             for grad_tensor, grad_variable in gradients
-                             if grad_tensor is not None]
-        optimizer_gradient_clipping = optimizer.apply_gradients(
-            clipped_gradients)
-        return optimizer_gradient_clipping, loss_error
+        with tf.variable_scope('optimizer'):
+            loss_error = tf.contrib.seq2seq.sequence_loss(
+                training_predictions,
+                targets,
+                tf.ones([
+                    self.input_shape[0], self.model_hparams['sequence_length']
+                ]))
+            optimizer = tf.train.AdamOptimizer(self.model_hparams['learning_rate'])
+            gradients = optimizer.compute_gradients(loss_error)
+            # Gradient clipping
+            clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
+                                  grad_variable)
+                                 for grad_tensor, grad_variable in gradients
+                                 if grad_tensor is not None]
+            optimizer_gradient_clipping = optimizer.apply_gradients(
+                clipped_gradients)
+            return optimizer_gradient_clipping, loss_error
 
     def decode_test_set(self,
                         encoder_state,
@@ -331,6 +349,10 @@ class Seq2Seq:
                 else:
                     raise ValueError('Invalid mode detected!', self.mode)
 
+    def _build_tensorboard(self):
+        writer = tf.summary.FileWriter('./output/chatbot-tfboard/2')
+        writer.add_graph(self.session.graph)
+
     def _create_session(self):
         """Initialize the TensorFlow session
         """
@@ -348,8 +370,6 @@ def main():
     from .data import process_count_vectorization
     sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = process_count_vectorization()
     # Defining session
-    tf.reset_default_graph()
-    session = tf.InteractiveSession()
 
     # Getting the training and testing predictions
     model_hparams = dict({
@@ -368,10 +388,6 @@ def main():
         model_hparams=model_hparams
     )
     optimizer_gradient_clipping, loss_error = model.compile()
-    session.run(tf.global_variables_initializer())
-
-    writer = tf.summary.FileWriter('./output/chatbot-tfboard/2')
-    writer.add_graph(session.graph)
 
 
 if __name__ == "__main__":
