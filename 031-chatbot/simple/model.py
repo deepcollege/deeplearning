@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 class Seq2Seq:
+    mode='training'
     batch_size=0
     sequence_length=0
     answers_words_2_ints={}
@@ -11,6 +12,7 @@ class Seq2Seq:
     rnn_size=0
     num_layers=0
     learning_rate=0
+    input_shape=0
 
     def __init__(
       self,
@@ -37,6 +39,7 @@ class Seq2Seq:
 
     def compile(self,
                 mode='training'):
+        self.mode = mode
         # Initiating graph inputs
         inputs, targets, lr, keep_prob = self.model_inputs()
 
@@ -44,40 +47,39 @@ class Seq2Seq:
         _sequence_length = tf.placeholder_with_default(self.sequence_length, None, name='sequence_length')
 
         # Getting the shape of the inputs tensor
-        input_shape = tf.shape(inputs)
-
-        # Getting the training and testing predictions
-        training_predictions, test_predictions = self._build_graph(
-            tf.reverse(inputs, [-1]),  # why reverse inputs? read the seq2seq doc
-            targets,
-            keep_prob,
-            self.batch_size,
-            _sequence_length,
-            len(self.answers_words_2_ints),
-            len(self.questions_words_2_ints),
-            self.encoding_embedding_size,
-            self.decoding_embedding_size,
-            self.rnn_size,
-            self.num_layers,
-            self.questions_words_2_ints)
-
-        # Optimization
-        with tf.name_scope('optimizaiton'):
-            # Loss
-            # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
-            loss_error = tf.contrib.seq2seq.sequence_loss(
-                training_predictions,
+        self.input_shape = tf.shape(inputs)
+        if self.mode == 'training':
+            # Getting the training and testing predictions
+            optimizer_gradient_clipping, loss_error = self._build_graph(
+                tf.reverse(inputs, [-1]),  # why reverse inputs? read the seq2seq doc
                 targets,
-                tf.ones([input_shape[0], self.sequence_length]))
-            optimizer = tf.train.AdamOptimizer(self.learning_rate)
-            gradients = optimizer.compute_gradients(loss_error)
-            clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
-                                  grad_variable)
-                                 for grad_tensor, grad_variable in gradients
-                                 if grad_tensor is not None]
-            optimizer_gradient_clipping = optimizer.apply_gradients(clipped_gradients)
-
-        return training_predictions, test_predictions, optimizer_gradient_clipping, loss_error
+                keep_prob,
+                self.batch_size,
+                _sequence_length,
+                len(self.answers_words_2_ints),
+                len(self.questions_words_2_ints),
+                self.encoding_embedding_size,
+                self.decoding_embedding_size,
+                self.rnn_size,
+                self.num_layers,
+                self.questions_words_2_ints)
+            return optimizer_gradient_clipping, loss_error
+        elif self.mode == 'testing':
+            test_predictions = self._build_graph(
+                tf.reverse(inputs, [-1]),
+                # why reverse inputs? read the seq2seq doc
+                targets,
+                keep_prob,
+                self.batch_size,
+                _sequence_length,
+                len(self.answers_words_2_ints),
+                len(self.questions_words_2_ints),
+                self.encoding_embedding_size,
+                self.decoding_embedding_size,
+                self.rnn_size,
+                self.num_layers,
+                self.questions_words_2_ints)
+            return test_predictions
 
     def model_inputs(self):
         ''' Creating placeholders and targets '''
@@ -132,7 +134,8 @@ class Seq2Seq:
                             decoding_scope,
                             output_function,
                             keep_prob,
-                            batch_size):
+                            batch_size,
+                            targets):
         '''
         We need decode_training_set to decode the encoded questions and
         answers of the training set (second part of the Seq2Seq model)
@@ -161,7 +164,25 @@ class Seq2Seq:
 
         decoder_output_dropout = tf.nn.dropout(decoder_output, keep_prob)
 
-        return output_function(decoder_output_dropout)
+        training_predictions = output_function(decoder_output_dropout)
+
+        # Optimization
+        with tf.name_scope('optimizaiton'):
+            # Loss
+            # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
+            loss_error = tf.contrib.seq2seq.sequence_loss(
+                training_predictions,
+                targets,
+                tf.ones([self.input_shape[0], self.sequence_length]))
+            optimizer = tf.train.AdamOptimizer(self.learning_rate)
+            gradients = optimizer.compute_gradients(loss_error)
+            clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
+                                  grad_variable)
+                                 for grad_tensor, grad_variable in gradients
+                                 if grad_tensor is not None]
+            optimizer_gradient_clipping = optimizer.apply_gradients(
+                clipped_gradients)
+            return optimizer_gradient_clipping, loss_error
 
     def decode_test_set(self,
                         encoder_state,
@@ -222,7 +243,8 @@ class Seq2Seq:
                     word2int,
                     keep_prob,
                     batch_size,
-                    decoding_scope):
+                    decoding_scope,
+                    targets):
         # Creating the decoder RNN
         lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
         lstm_dropout = tf.contrib.rnn.DropoutWrapper(
@@ -240,31 +262,34 @@ class Seq2Seq:
         # training_predictions = logits
         # What is logits layer?
         # https://stackoverflow.com/questions/41455101/what-is-the-meaning-of-the-word-logits-in-tensorflow
-        training_predictions = self.decode_training_set(
-            encoder_state,
-            decoder_cell,
-            decoder_embedded_input,
-            sequence_length,
-            decoding_scope,
-            output_function,
-            keep_prob,
-            batch_size)
-
-        decoding_scope.reuse_variables()
-        # SOS -> start of sentence
-        # EOS -> End of sentence
-        test_predictions = self.decode_test_set(
-            encoder_state,
-            decoder_cell,
-            decoder_embedding_matrix,
-            word2int['<SOS>'],
-            word2int['<EOS>'],
-            sequence_length - 1,
-            num_words,
-            decoding_scope,
-            output_function,
-            keep_prob, batch_size)
-        return training_predictions, test_predictions
+        if self.mode == 'training':
+            optimizer_gradient_clipping, loss_error = self.decode_training_set(
+                encoder_state,
+                decoder_cell,
+                decoder_embedded_input,
+                sequence_length,
+                decoding_scope,
+                output_function,
+                keep_prob,
+                batch_size,
+                targets)
+            return optimizer_gradient_clipping, loss_error
+        elif self.mode == 'testing':
+            decoding_scope.reuse_variables()
+            # SOS -> start of sentence
+            # EOS -> End of sentence
+            test_predictions = self.decode_test_set(
+                encoder_state,
+                decoder_cell,
+                decoder_embedding_matrix,
+                word2int['<SOS>'],
+                word2int['<EOS>'],
+                sequence_length - 1,
+                num_words,
+                decoding_scope,
+                output_function,
+                keep_prob, batch_size)
+            return test_predictions
 
     def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
                       answers_num_words, questions_num_words,
@@ -293,19 +318,36 @@ class Seq2Seq:
                 )
                 decoder_embedded_input = tf.nn.embedding_lookup(decoder_embeddings_matrix,
                                                                 preprocessed_targets)
-                training_predictions, test_predictions = self.decoder_rnn(
-                    decoder_embedded_input,
-                    decoder_embeddings_matrix,
-                    encoder_state,
-                    questions_num_words,
-                    sequence_length,
-                    rnn_size,
-                    num_layers,
-                    questions_words_2_ints,
-                    keep_prob,
-                    batch_size,
-                    decoding_scope)
-        return training_predictions, test_predictions
+                if self.mode == 'training':
+                    optimizer_gradient_clipping, loss_error = self.decoder_rnn(
+                        decoder_embedded_input,
+                        decoder_embeddings_matrix,
+                        encoder_state,
+                        questions_num_words,
+                        sequence_length,
+                        rnn_size,
+                        num_layers,
+                        questions_words_2_ints,
+                        keep_prob,
+                        batch_size,
+                        decoding_scope,
+                        targets)
+                    return optimizer_gradient_clipping, loss_error
+                elif self.mode == 'testing':
+                    test_predictions = self.decoder_rnn(
+                        decoder_embedded_input,
+                        decoder_embeddings_matrix,
+                        encoder_state,
+                        questions_num_words,
+                        sequence_length,
+                        rnn_size,
+                        num_layers,
+                        questions_words_2_ints,
+                        keep_prob,
+                        batch_size,
+                        decoding_scope,
+                        targets)
+                    return test_predictions
 
 
 def main():
@@ -327,7 +369,7 @@ def main():
         num_layers=3,
         learning_rate=0.01
     )
-    training_predictions, test_predictions, optimizer_gradient_clipping, loss_error = model.compile()
+    optimizer_gradient_clipping, loss_error = model.compile()
     session.run(tf.global_variables_initializer())
 
     writer = tf.summary.FileWriter('./output/chatbot-tfboard/2')
