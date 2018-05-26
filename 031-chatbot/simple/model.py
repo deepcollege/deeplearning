@@ -167,22 +167,22 @@ class Seq2Seq:
         training_predictions = output_function(decoder_output_dropout)
 
         # Optimization
-        with tf.name_scope('optimizaiton'):
-            # Loss
-            # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
-            loss_error = tf.contrib.seq2seq.sequence_loss(
-                training_predictions,
-                targets,
-                tf.ones([self.input_shape[0], self.sequence_length]))
-            optimizer = tf.train.AdamOptimizer(self.learning_rate)
-            gradients = optimizer.compute_gradients(loss_error)
-            clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
-                                  grad_variable)
-                                 for grad_tensor, grad_variable in gradients
-                                 if grad_tensor is not None]
-            optimizer_gradient_clipping = optimizer.apply_gradients(
-                clipped_gradients)
-            return optimizer_gradient_clipping, loss_error
+        # Loss
+        # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
+        loss_error = tf.contrib.seq2seq.sequence_loss(
+            training_predictions,
+            targets,
+            tf.ones([self.input_shape[0], self.sequence_length]))
+        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        gradients = optimizer.compute_gradients(loss_error)
+        # Gradient clipping
+        clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
+                              grad_variable)
+                             for grad_tensor, grad_variable in gradients
+                             if grad_tensor is not None]
+        optimizer_gradient_clipping = optimizer.apply_gradients(
+            clipped_gradients)
+        return optimizer_gradient_clipping, loss_error
 
     def decode_test_set(self,
                         encoder_state,
