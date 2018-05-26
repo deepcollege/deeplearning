@@ -17,6 +17,7 @@ class Seq2Seq:
     def __init__(
       self,
       batch_size=64,
+      # TODO: Abstract it
       sequence_length=25,
       answers_words_2_ints={},
       questions_words_2_ints={},
@@ -306,9 +307,12 @@ class Seq2Seq:
                     answers_num_words + 1,
                     encoder_embedding_size,
                     initializer=tf.random_uniform_initializer(0, 1))
-                encoder_state = self.encoder_rnn(encoder_embedded_input,
-                                            rnn_size, num_layers,
-                                            keep_prob, sequence_length)
+                encoder_state = self.encoder_rnn(
+                    encoder_embedded_input,
+                    rnn_size,
+                    num_layers,
+                    keep_prob,
+                    sequence_length)
             with tf.variable_scope('decoding') as decoding_scope:
                 preprocessed_targets = self.preprocess_targets(targets,
                                                           questions_words_2_ints,
@@ -364,6 +368,7 @@ def main():
     # Getting the training and testing predictions
     model = Seq2Seq(
         batch_size=64,
+        # TODO: abstract this
         sequence_length=25,
         answers_words_2_ints=answers_words_2_counts,
         questions_words_2_ints=questions_words_2_counts,
