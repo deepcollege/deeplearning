@@ -6,6 +6,17 @@ class Seq2Seq:
     model_hparams = None
     session = None
     input_shape = None
+    # training
+    optimizer_gradient_clipping = None
+    loss_error = None
+    inputs = None
+    targets = None
+    lr = None
+    keep_prob = None
+    sequence_length = None # Static sequence length TODO: refactor it to dynamic
+
+    # inference
+    test_predictions = None
 
     def __init__(
       self,
@@ -21,21 +32,21 @@ class Seq2Seq:
 
         self.mode = mode
         # Initiating graph inputs
-        inputs, targets, lr, keep_prob = self.model_inputs()
+        self.inputs, self.targets, self.lr, self.keep_prob = self.model_inputs()
         # Setting the sequence length
-        _sequence_length = tf.placeholder_with_default(self.model_hparams['sequence_length'], None, name='sequence_length')
+        self.sequence_length = tf.placeholder_with_default(self.model_hparams['sequence_length'], None, name='sequence_length')
 
         # Getting the shape of the inputs tensor
-        self.input_shape = tf.shape(inputs)
+        self.input_shape = tf.shape(self.inputs)
 
         if self.mode == 'training':
             # Getting the training and testing predictions
-            optimizer_gradient_clipping, loss_error = self._build_graph(
-                tf.reverse(inputs, [-1]),  # why reverse inputs? read the seq2seq doc
-                targets,
-                keep_prob,
+            self.optimizer_gradient_clipping, self.loss_error = self._build_graph(
+                tf.reverse(self.inputs, [-1]),  # why reverse inputs? read the seq2seq doc
+                self.targets,
+                self.keep_prob,
                 self.model_hparams['batch_size'],
-                _sequence_length,
+                self.sequence_length,
                 len(self.model_hparams['answers_words_2_ints']),
                 len(self.model_hparams['questions_words_2_ints']),
                 self.model_hparams['encoding_embedding_size'],
@@ -44,19 +55,13 @@ class Seq2Seq:
                 self.model_hparams['num_layers'],
                 self.model_hparams['questions_words_2_ints'])
 
-            # Init before returning
-            # TODO: Refactor
-            self.session.run(tf.global_variables_initializer())
-            self._build_tensorboard()
-            return optimizer_gradient_clipping, loss_error
         elif self.mode == 'testing':
-            test_predictions = self._build_graph(
-                tf.reverse(inputs, [-1]),
-                # why reverse inputs? read the seq2seq doc
-                targets,
-                keep_prob,
+            self.test_predictions = self._build_graph(
+                tf.reverse(self.inputs, [-1]), # why reverse inputs? read the seq2seq doc
+                self.targets,
+                self.keep_prob,
                 self.model_hparams['batch_size'],
-                _sequence_length,
+                self.sequence_length,
                 len(self.model_hparams['answers_words_2_ints']),
                 len(self.model_hparams['questions_words_2_ints']),
                 self.model_hparams['encoding_embedding_size'],
@@ -64,14 +69,13 @@ class Seq2Seq:
                 self.model_hparams['rnn_size'],
                 self.model_hparams['num_layers'],
                 self.model_hparams['questions_words_2_ints'])
-            self._build_tensorboard()
-
-            # Init before returning
-            # TODO: Refactor
-            self.session.run(tf.global_variables_initializer())
-            return test_predictions
         else:
             raise ValueError('Invalid mode detected!', self.mode)
+
+        # Init before returning
+        # TODO: Refactor
+        self.session.run(tf.global_variables_initializer())
+        self._build_tensorboard()
 
     def model_inputs(self):
         ''' Creating placeholders and targets '''
@@ -286,6 +290,16 @@ class Seq2Seq:
                 keep_prob, batch_size)
             return test_predictions
 
+    def train_batch(self, inputs, targets, learning_rate):
+        _, batch_training_loss_error = self.session.run(
+            [self.optimizer_gradient_clipping, self.loss_error], {
+                self.inputs: inputs,
+                self.targets: targets,
+                self.lr: learning_rate,
+                self.sequence_length: targets.shape[1],
+                self.keep_prob: self.model_hparams.keep_probability
+            })
+
     def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
                       answers_num_words, questions_num_words,
                       encoder_embedding_size, decoder_embedding_size, rnn_size,
@@ -382,12 +396,13 @@ def main():
         'rnn_size': 512,
         'num_layers': 3,
         'learning_rate': 0.01,
-        'gpu_dynamic_memory_growth': False
+        'gpu_dynamic_memory_growth': False,
+        'keep_probability': 0.5
     })
     model = Seq2Seq(
         model_hparams=model_hparams
     )
-    optimizer_gradient_clipping, loss_error = model.compile()
+    model.compile()
 
 
 if __name__ == "__main__":
