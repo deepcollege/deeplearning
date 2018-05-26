@@ -80,6 +80,8 @@ class Seq2Seq:
                 self.num_layers,
                 self.questions_words_2_ints)
             return test_predictions
+        else:
+            raise ValueError('Invalid mode detected!', self.mode)
 
     def model_inputs(self):
         ''' Creating placeholders and targets '''
@@ -348,6 +350,8 @@ class Seq2Seq:
                         decoding_scope,
                         targets)
                     return test_predictions
+                else:
+                    raise ValueError('Invalid mode detected!', self.mode)
 
 
 def main():
