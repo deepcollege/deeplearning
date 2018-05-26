@@ -406,6 +406,7 @@ while(True):
         break
     question = convert_string2int(question, questions_words_2_ints)
     question = question + [questions_words_2_ints['<PAD>']] * (25 - len(question))
+    # Creating a fake batch because it always wants the batch size of 25
     fake_batch = np.zeros((batch_size, 25))
     fake_batch[0] = question
     # We are interested in the first element
