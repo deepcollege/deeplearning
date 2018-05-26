@@ -3,49 +3,21 @@ import tensorflow as tf
 
 class Seq2Seq:
     mode='training'
-    batch_size=0
-    sequence_length=0
-    answers_words_2_ints={}
-    questions_words_2_ints={}
-    encoding_embedding_size=0
-    decoding_embedding_size=0
-    rnn_size=0
-    num_layers=0
-    learning_rate=0
-    input_shape=0
+    model_hparams=None
 
     def __init__(
       self,
-      batch_size=64,
-      # TODO: Abstract it
-      sequence_length=25,
-      answers_words_2_ints={},
-      questions_words_2_ints={},
-      encoding_embedding_size=512,
-      decoding_embedding_size=512,
-      rnn_size=512,
-      # Number of encoder and decoder layers
-      num_layers=3,
-      learning_rate=0.01,
+      model_hparams,
     ):
-        self.batch_size = batch_size
-        self.sequence_length = sequence_length
-        self.answers_words_2_ints = answers_words_2_ints
-        self.questions_words_2_ints = questions_words_2_ints
-        self.encoding_embedding_size = encoding_embedding_size
-        self.decoding_embedding_size = decoding_embedding_size
-        self.rnn_size = rnn_size
-        self.num_layers = num_layers
-        self.learning_rate = learning_rate
+        self.model_hparams = model_hparams
 
     def compile(self,
                 mode='training'):
         self.mode = mode
         # Initiating graph inputs
         inputs, targets, lr, keep_prob = self.model_inputs()
-
         # Setting the sequence length
-        _sequence_length = tf.placeholder_with_default(self.sequence_length, None, name='sequence_length')
+        _sequence_length = tf.placeholder_with_default(self.model_hparams['sequence_length'], None, name='sequence_length')
 
         # Getting the shape of the inputs tensor
         self.input_shape = tf.shape(inputs)
@@ -55,15 +27,15 @@ class Seq2Seq:
                 tf.reverse(inputs, [-1]),  # why reverse inputs? read the seq2seq doc
                 targets,
                 keep_prob,
-                self.batch_size,
+                self.model_hparams['batch_size'],
                 _sequence_length,
-                len(self.answers_words_2_ints),
-                len(self.questions_words_2_ints),
-                self.encoding_embedding_size,
-                self.decoding_embedding_size,
-                self.rnn_size,
-                self.num_layers,
-                self.questions_words_2_ints)
+                len(self.model_hparams['answers_words_2_ints']),
+                len(self.model_hparams['questions_words_2_ints']),
+                self.model_hparams['encoding_embedding_size'],
+                self.model_hparams['decoding_embedding_size'],
+                self.model_hparams['rnn_size'],
+                self.model_hparams['num_layers'],
+                self.model_hparams['questions_words_2_ints'])
             return optimizer_gradient_clipping, loss_error
         elif self.mode == 'testing':
             test_predictions = self._build_graph(
@@ -71,15 +43,15 @@ class Seq2Seq:
                 # why reverse inputs? read the seq2seq doc
                 targets,
                 keep_prob,
-                self.batch_size,
+                self.model_hparams['batch_size'],
                 _sequence_length,
-                len(self.answers_words_2_ints),
-                len(self.questions_words_2_ints),
-                self.encoding_embedding_size,
-                self.decoding_embedding_size,
-                self.rnn_size,
-                self.num_layers,
-                self.questions_words_2_ints)
+                len(self.model_hparams['answers_words_2_ints']),
+                len(self.model_hparams['questions_words_2_ints']),
+                self.model_hparams['encoding_embedding_size'],
+                self.model_hparams['decoding_embedding_size'],
+                self.model_hparams['rnn_size'],
+                self.model_hparams['num_layers'],
+                self.model_hparams['questions_words_2_ints'])
             return test_predictions
         else:
             raise ValueError('Invalid mode detected!', self.mode)
@@ -175,8 +147,10 @@ class Seq2Seq:
         loss_error = tf.contrib.seq2seq.sequence_loss(
             training_predictions,
             targets,
-            tf.ones([self.input_shape[0], self.sequence_length]))
-        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+            tf.ones([
+                self.input_shape[0], self.model_hparams['sequence_length']
+            ]))
+        optimizer = tf.train.AdamOptimizer(self.model_hparams['learning_rate'])
         gradients = optimizer.compute_gradients(loss_error)
         # Gradient clipping
         clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.),
@@ -357,6 +331,18 @@ class Seq2Seq:
                 else:
                     raise ValueError('Invalid mode detected!', self.mode)
 
+    def _create_session(self):
+        """Initialize the TensorFlow session
+        """
+        if self.model_hparams['gpu_dynamic_memory_growth']:
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+            session = tf.Session(config=config)
+        else:
+            session = tf.Session()
+
+        return session
+
 
 def main():
     from .data import process_count_vectorization
@@ -366,17 +352,20 @@ def main():
     session = tf.InteractiveSession()
 
     # Getting the training and testing predictions
+    model_hparams = dict({
+        'batch_size': 64,
+        'sequence_length': 25,
+        'answers_words_2_ints': answers_words_2_counts,
+        'questions_words_2_ints': questions_words_2_counts,
+        'encoding_embedding_size': 512,
+        'decoding_embedding_size': 512,
+        'rnn_size': 512,
+        'num_layers': 3,
+        'learning_rate': 0.01,
+        'gpu_dynamic_memory_growth': False
+    })
     model = Seq2Seq(
-        batch_size=64,
-        # TODO: abstract this
-        sequence_length=25,
-        answers_words_2_ints=answers_words_2_counts,
-        questions_words_2_ints=questions_words_2_counts,
-        encoding_embedding_size=512,
-        decoding_embedding_size=512,
-        rnn_size=512,
-        num_layers=3,
-        learning_rate=0.01
+        model_hparams=model_hparams
     )
     optimizer_gradient_clipping, loss_error = model.compile()
     session.run(tf.global_variables_initializer())
