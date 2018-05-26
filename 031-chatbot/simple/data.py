@@ -1,6 +1,8 @@
+import os
 import io
 import re
 import pickle
+import errno
 from pprint import pprint
 
 from .utils.pprint_helper import Head
@@ -116,7 +118,38 @@ def get_cornell_data():
     return questions, answers
 
 
-def process_count_vectorization(type='cornell'):
+def save_data(name, obj):
+    filename = './data/{}.pkl'.format(name)
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+    with open(filename.format(name), 'w+') as output:
+        pickle.dump(obj, output)
+
+
+def read_data(name):
+    filename = './data/{}.pkl'.format(name)
+    with open(filename, 'rb') as input:
+        return pickle.load(input)
+
+
+def process_count_vectorization(type='cornell', lazy=True):
+    # Handle lazy load
+    if lazy:
+        try:
+            sorted_clean_questions = read_data('sorted_clean_questions')
+            sorted_clean_answers = read_data('sorted_clean_answers')
+            questions_words_2_counts = read_data('questions_words_2_counts')
+            answers_words_2_counts = read_data('answers_words_2_counts')
+            answers_counts_2_words = read_data('answers_counts_2_words')
+            return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
+        except Exception as e:
+            print('Lazy load failed:', e)
+            pass
+
     questions = []
     answers = []
 
@@ -129,14 +162,6 @@ def process_count_vectorization(type='cornell'):
     clean_questions = []
     for question in questions:
         clean_questions.append(clean_text(question))
-
-	with open('testing_dump.pkl', 'rb') as output:
-		pickle.dumps(clean_questions, output, pickle.HIGHEST_PROTOCOL)
-
-	with open('testing_dump.pkl', 'rb') as input:
-		stuff = pickle.load(input)
-		print('checking stuff ', stuff)
-	exit()
 
     pprint(clean_questions, stream=Head(5))
     print('\n\n')
@@ -307,16 +332,25 @@ def process_count_vectorization(type='cornell'):
     pprint(sorted_clean_answers, stream=Head(5))
     print('\n\n')
     '''
-	1. sorted_clean_questions: list of processed questions
-	2. sorted_clean_answers: list of processed answers
-	3. answers_counts_2_words: list of ints lookup word table
-	'''
+	  1. sorted_clean_questions: list of processed questions
+	  2. sorted_clean_answers: list of processed answers
+	  3. answers_counts_2_words: list of ints lookup word table
+	  '''
+
+    # Saving
+    if lazy:
+        save_data('sorted_clean_questions', sorted_clean_questions)
+        save_data('sorted_clean_answers', sorted_clean_answers)
+        save_data('questions_words_2_counts', questions_words_2_counts)
+        save_data('answers_words_2_counts', answers_words_2_counts)
+        save_data('answers_counts_2_words', answers_counts_2_words)
     return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
 
 
 def main():
-    sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_counts_2_words = process_count_vectorization(
+    sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = process_count_vectorization(
     )
+
     print('---- Some questions ----')
     print(sorted_clean_questions[0])
     print(sorted_clean_questions[1])
