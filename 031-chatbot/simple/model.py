@@ -47,8 +47,8 @@ class Seq2Seq:
                 self.keep_prob,
                 self.model_hparams['batch_size'],
                 self.sequence_length,
-                len(self.model_hparams['answers_words_2_ints']),
-                len(self.model_hparams['questions_words_2_ints']),
+                self.model_hparams['num_questions_word2count'],
+                self.model_hparams['num_answers_word2count'],
                 self.model_hparams['encoding_embedding_size'],
                 self.model_hparams['decoding_embedding_size'],
                 self.model_hparams['rnn_size'],
@@ -62,8 +62,8 @@ class Seq2Seq:
                 self.keep_prob,
                 self.model_hparams['batch_size'],
                 self.sequence_length,
-                len(self.model_hparams['answers_words_2_ints']),
-                len(self.model_hparams['questions_words_2_ints']),
+                self.model_hparams['num_questions_word2count'],
+                self.model_hparams['num_answers_word2count'],
                 self.model_hparams['encoding_embedding_size'],
                 self.model_hparams['decoding_embedding_size'],
                 self.model_hparams['rnn_size'],
@@ -381,11 +381,12 @@ class Seq2Seq:
 
 
 def main():
-    from .data import process_count_vectorization
-    sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = process_count_vectorization()
+    # from .data import process_count_vectorization
+    # sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = process_count_vectorization()
     # Defining session
 
     # Getting the training and testing predictions
+    '''
     model_hparams = dict({
         'batch_size': 64,
         'sequence_length': 25,
@@ -403,6 +404,7 @@ def main():
         model_hparams=model_hparams
     )
     model.compile()
+    '''
 
 
 if __name__ == "__main__":

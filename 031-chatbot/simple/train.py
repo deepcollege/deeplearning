@@ -4,10 +4,24 @@ from .model import Seq2Seq
 
 
 def main():
+  # Dataset, default should be using Cornell
   ds = Dataset()
   ds.load()
-  epochs = 100
+  model_hparams = dict({
+    'batch_size': 64,
+    'sequence_length': 25,
+    'num_questions_word2count': ds.sub.num_questions_word2count,
+    'num_answers_word2count': ds.sub.num_answers_word2count,
+    'encoding_embedding_size': 512,
+    'decoding_embedding_size': 512,
+    'rnn_size': 512,
+    'num_layers': 3,
+    'learning_rate': 0.01,
+    'gpu_dynamic_memory_growth': False,
+    'keep_probability': 0.5
+  })
 
+  epochs = 100
   for epoch in range(1, epochs + 1):
     for batch_index, (padded_question_in_batch,
                       padded_answers_in_batch) in enumerate(ds.get_batches(25)):

@@ -84,6 +84,8 @@ class Cornell:
     questions_words_2_counts = None
     answers_words_2_counts = None
     answers_counts_2_words = None
+    num_questions_word2count = 0 # Number of total word2count in questions dict
+    num_answers_word2count = 0   # Number of total word2count in answers dict
 
     # Train test split
     training_validation_split = 0
@@ -98,6 +100,8 @@ class Cornell:
          self.questions_words_2_counts,
          self.answers_words_2_counts,
          self.answers_counts_2_words) = self._process_count_vectorization()
+        self.num_questions_word2count = len(self.questions_words_2_counts)
+        self.num_answers_word2count = len(self.answers_words_2_counts)
 
         # Train test split
         self.training_validation_split = int(len(self.sorted_clean_questions) * 0.15)
@@ -427,24 +431,23 @@ class Cornell:
         padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
         return padded_questions_in_batch, padded_answers_in_batch
 
-
 class Dataset:
-    ds = None   # Dataset object
+    sub = None   # Dataset object
     type = 'cornell'
 
     def load(self):
         if self.type == 'cornell':
-            self.ds = Cornell()
+            self.sub = Cornell()
 
-        if self.ds:
-            self.ds.load()
+        if self.sub:
+            self.sub.load()
         else:
             raise Exception('Invalid dataset!')
 
     def get_batches(self, batch_size):
-        training_questions = self.ds.sorted_clean_questions[self.ds.training_validation_split:]
+        training_questions = self.sub.sorted_clean_questions[self.sub.training_validation_split:]
         for batch_index in range(0, len(training_questions) // batch_size):
-            yield self.ds.get_next_batch(batch_index, batch_size)
+            yield self.sub.get_next_batch(batch_index, batch_size)
 
 
 def main():
