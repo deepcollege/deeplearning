@@ -3,6 +3,7 @@ import io
 import re
 import pickle
 import errno
+import numpy as np
 from pprint import pprint
 
 from .utils.pprint_helper import Head
@@ -49,10 +50,67 @@ def convert_word_to_count(counter={}, doc=[]):
                 counter[word] += 1
     return counter
 
+def save_file_data(name, obj):
+    '''
+    Saving an object as a file using pickle
+    :param name:
+    :param obj:
+    :return:
+    '''
+    filename = './data/{}.pkl'.format(name)
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+    with open(filename.format(name), 'w+') as output:
+        pickle.dump(obj, output)
+
+def read_file_data(name):
+    '''
+    Reading
+    :param name:
+    :return:
+    '''
+    filename = './data/{}.pkl'.format(name)
+    with open(filename, 'rb') as input:
+        return pickle.load(input)
+
 
 class Cornell:
+    sorted_clean_questions = None
+    sorted_clean_answers = None
+    questions_words_2_counts = None
+    answers_words_2_counts = None
+    answers_counts_2_words = None
 
-    def read_data(self):
+    # Train test split
+    training_validation_split = 0
+    training_questions = None
+    training_answers = None
+    validation_questions = None
+    validation_answers = None
+
+    def load(self):
+        (self.sorted_clean_questions,
+         self.sorted_clean_answers,
+         self.questions_words_2_counts,
+         self.answers_words_2_counts,
+         self.answers_counts_2_words) = self._process_count_vectorization()
+
+        # Train test split
+        self.training_validation_split = int(len(self.sorted_clean_questions) * 0.15)
+        self.training_questions = self.sorted_clean_questions[self.training_validation_split:]
+        self.training_answers = self.sorted_clean_answers[self.training_validation_split:]
+        self.validation_questions = self.sorted_clean_questions[:self.training_validation_split]
+        self.validation_answers = self.sorted_clean_answers[:self.training_validation_split]
+
+    def _get_data(self):
+        '''
+
+        :return: raw questions and answers
+        '''
         lines = io.open(
             'simple/inputs/cornell/movie_lines.txt',
             encoding='utf8',
@@ -129,49 +187,7 @@ class Cornell:
       '''
         return questions, answers
 
-
-class Dataset:
-    sorted_clean_questions = None
-    sorted_clean_answers = None
-    questions_words_2_counts = None
-    answers_words_2_counts = None
-    answers_counts_2_words = None
-
-    def load(self):
-        (self.sorted_clean_questions,
-         self.sorted_clean_answers,
-         self.questions_words_2_counts,
-         self.answers_words_2_counts,
-         self.answers_counts_2_words) = self._process_count_vectorization()
-
-    def _save_data(self, name, obj):
-        '''
-        Saving an object as a file using pickle
-        :param name:
-        :param obj:
-        :return:
-        '''
-        filename = './data/{}.pkl'.format(name)
-        if not os.path.exists(os.path.dirname(filename)):
-            try:
-                os.makedirs(os.path.dirname(filename))
-            except OSError as exc:  # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-        with open(filename.format(name), 'w+') as output:
-            pickle.dump(obj, output)
-
-    def _read_data(self, name):
-        '''
-        Reading
-        :param name:
-        :return:
-        '''
-        filename = './data/{}.pkl'.format(name)
-        with open(filename, 'rb') as input:
-            return pickle.load(input)
-
-    def _process_count_vectorization(self, type='cornell', lazy=True):
+    def _process_count_vectorization(self, lazy=True):
         '''
         Process in-memory word2vec
         :param type:
@@ -181,12 +197,12 @@ class Dataset:
         # Handle lazy load
         if lazy:
             try:
-                sorted_clean_questions = self._read_data('sorted_clean_questions')
-                sorted_clean_answers = self._read_data('sorted_clean_answers')
-                questions_words_2_counts = self._read_data(
+                sorted_clean_questions = read_file_data('sorted_clean_questions')
+                sorted_clean_answers = read_file_data('sorted_clean_answers')
+                questions_words_2_counts = read_file_data(
                     'questions_words_2_counts')
-                answers_words_2_counts = self._read_data('answers_words_2_counts')
-                answers_counts_2_words = self._read_data('answers_counts_2_words')
+                answers_words_2_counts = read_file_data('answers_words_2_counts')
+                answers_counts_2_words = read_file_data('answers_counts_2_words')
                 return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
             except Exception as e:
                 print('Lazy load failed:', e)
@@ -195,8 +211,7 @@ class Dataset:
         questions = []
         answers = []
 
-        if type == 'cornell':
-            questions, answers = get_cornell_data()
+        questions, answers = self._get_data()
 
         # Step 4: cleaning the questions
         pprint('---- Step 4 cleaning questions ----')
@@ -382,35 +397,71 @@ class Dataset:
 
         # Saving
         if lazy:
-            self._save_data('sorted_clean_questions', sorted_clean_questions)
-            self._save_data('sorted_clean_answers', sorted_clean_answers)
-            self._save_data('questions_words_2_counts', questions_words_2_counts)
-            self._save_data('answers_words_2_counts', answers_words_2_counts)
-            self._save_data('answers_counts_2_words', answers_counts_2_words)
+            save_file_data('sorted_clean_questions', sorted_clean_questions)
+            save_file_data('sorted_clean_answers', sorted_clean_answers)
+            save_file_data('questions_words_2_counts', questions_words_2_counts)
+            save_file_data('answers_words_2_counts', answers_words_2_counts)
+            save_file_data('answers_counts_2_words', answers_counts_2_words)
         return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
 
+    def _apply_padding(self, batch_of_sequences, word2int):
+        '''
+        Padding the sequence with the <PAD> token
+        :param batch_of_sequences:
+        :param word2int:
+        :return: ['something', '<PAD>', '<PAD>', '<PAD>', '<PAD>', '<PAD>'] <- depends on max_sequence_length
+        '''
+        max_sequence_length = max(
+            [len(sequence) for sequence in batch_of_sequences])
+        return [
+            sequence + [word2int['<PAD>']] * (
+            max_sequence_length - len(sequence))
+            for sequence in batch_of_sequences
+        ]
+
+    def get_next_batch(self, batch_index, batch_size):
+        start_index = batch_index * batch_size
+        questions_in_batch = self.training_questions[start_index:start_index + batch_size]
+        answers_in_batch = self.training_answers[start_index:start_index + batch_size]
+        padded_questions_in_batch = np.array(self._apply_padding(questions_in_batch, self.questions_words_2_counts))
+        padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
+        return padded_questions_in_batch, padded_answers_in_batch
+
+
+class Dataset:
+    ds = None   # Dataset object
+    type = 'cornell'
+
+    def load(self):
+        if self.type == 'cornell':
+            self.ds = Cornell()
+
+        if self.ds:
+            self.ds.load()
+        else:
+            raise Exception('Invalid dataset!')
+
     def get_batches(self, batch_size):
-        training_validation_split = int(len(self.sorted_clean_questions) * 0.15)
-        training_questions = self.sorted_clean_questions[training_validation_split:]
-        print('checking len', len(training_questions))
-        for i in range(0, len(training_questions) // batch_size):
-            yield i
+        training_questions = self.ds.sorted_clean_questions[self.ds.training_validation_split:]
+        for batch_index in range(0, len(training_questions) // batch_size):
+            yield self.ds.get_next_batch(batch_index, batch_size)
 
 
 def main():
     ds = Dataset()
     ds.load()
-
+    '''
     print('---- Some questions ----')
-    print(ds.sorted_clean_questions[0])
-    print(ds.sorted_clean_questions[1])
-    print(ds.sorted_clean_questions[2])
+    print(ds.ds.sorted_clean_questions[0])
+    print(ds.ds.sorted_clean_questions[1])
+    print(ds.ds.sorted_clean_questions[2])
     print('---- Some answers ------')
-    print(ds.sorted_clean_answers[0])
-    print(ds.sorted_clean_answers[1])
-    print(ds.sorted_clean_answers[2])
+    print(ds.ds.sorted_clean_answers[0])
+    print(ds.ds.sorted_clean_answers[1])
+    print(ds.ds.sorted_clean_answers[2])
     print('---- Looking up keys ----')
-    print(ds.answers_counts_2_words[ds.sorted_clean_questions[0][0]])
+    print(ds.ds.answers_counts_2_words[ds.ds.sorted_clean_questions[0][0]])
+    '''
     for index, val in enumerate(ds.get_batches(25)):
         print('index', index, 'val', val)
 
