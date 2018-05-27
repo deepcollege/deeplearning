@@ -304,8 +304,8 @@ class Seq2Seq:
                       answers_num_words, questions_num_words,
                       encoder_embedding_size, decoder_embedding_size, rnn_size,
                       num_layers, get_word2int):
-        with tf.variable_scope('model'):
-            with tf.variable_scope('encoding') as encoding_scope:
+        with tf.variable_scope('seq2seq'):
+            with tf.variable_scope('encoding'):
                 # building seq2seq model
                 # Maps a sequence of symbols to a sequence of embeddings
                 encoder_embedded_input = tf.contrib.layers.embed_sequence(
