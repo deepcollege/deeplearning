@@ -53,7 +53,7 @@ class Seq2Seq:
                 self.model_hparams['decoding_embedding_size'],
                 self.model_hparams['rnn_size'],
                 self.model_hparams['num_layers'],
-                self.model_hparams['questions_words_2_ints'])
+                self.model_hparams['get_word2int'])
 
         elif self.mode == 'testing':
             self.test_predictions = self._build_graph(
@@ -68,7 +68,7 @@ class Seq2Seq:
                 self.model_hparams['decoding_embedding_size'],
                 self.model_hparams['rnn_size'],
                 self.model_hparams['num_layers'],
-                self.model_hparams['questions_words_2_ints'])
+                self.model_hparams['get_word2int'])
         else:
             raise ValueError('Invalid mode detected!', self.mode)
 
@@ -85,10 +85,10 @@ class Seq2Seq:
         keep_prob = tf.placeholder(tf.float32, name='keep_prob')
         return inputs, targets, learning_rate, keep_prob
 
-    def preprocess_targets(self, targets, word2int, batch_size):
+    def preprocess_targets(self, targets, get_word2int, batch_size):
         ''' Preprocessing the targets '''
         # Everything except for the first token
-        left_side = tf.fill([batch_size, 1], word2int['<SOS>'])
+        left_side = tf.fill([batch_size, 1], get_word2int('<SOS>'))
         # Grab everything except for the last token
         # Answers without the end
         right_side = tf.strided_slice(targets, [0, 0], [batch_size, -1], [1, 1])
@@ -239,7 +239,7 @@ class Seq2Seq:
                     sequence_length,
                     rnn_size,
                     num_layers,
-                    word2int,
+                    get_word2int,
                     keep_prob,
                     batch_size,
                     decoding_scope,
@@ -281,8 +281,8 @@ class Seq2Seq:
                 encoder_state,
                 decoder_cell,
                 decoder_embedding_matrix,
-                word2int['<SOS>'],
-                word2int['<EOS>'],
+                get_word2int('<SOS>'),
+                get_word2int('<EOS>'),
                 sequence_length - 1,
                 num_words,
                 decoding_scope,
@@ -303,7 +303,7 @@ class Seq2Seq:
     def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
                       answers_num_words, questions_num_words,
                       encoder_embedding_size, decoder_embedding_size, rnn_size,
-                      num_layers, questions_words_2_ints):
+                      num_layers, get_word2int):
         with tf.variable_scope('model'):
             with tf.variable_scope('encoding') as encoding_scope:
                 # building seq2seq model
@@ -321,8 +321,8 @@ class Seq2Seq:
                     sequence_length)
             with tf.variable_scope('decoding') as decoding_scope:
                 preprocessed_targets = self.preprocess_targets(targets,
-                                                          questions_words_2_ints,
-                                                          batch_size)
+                                                               get_word2int,
+                                                               batch_size)
                 decoder_embeddings_matrix = tf.Variable(
                     tf.random_uniform(
                         [questions_num_words + 1, decoder_embedding_size], 0, 1
@@ -339,7 +339,7 @@ class Seq2Seq:
                         sequence_length,
                         rnn_size,
                         num_layers,
-                        questions_words_2_ints,
+                        get_word2int,
                         keep_prob,
                         batch_size,
                         decoding_scope,
@@ -354,7 +354,7 @@ class Seq2Seq:
                         sequence_length,
                         rnn_size,
                         num_layers,
-                        questions_words_2_ints,
+                        get_word2int,
                         keep_prob,
                         batch_size,
                         decoding_scope,
@@ -381,30 +381,32 @@ class Seq2Seq:
 
 
 def main():
-    # from .data import process_count_vectorization
-    # sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = process_count_vectorization()
-    # Defining session
-
+    from .data import Dataset
+    ds = Dataset()
+    ds.load()
     # Getting the training and testing predictions
-    '''
+
     model_hparams = dict({
+        # Actual hyperparameters
         'batch_size': 64,
         'sequence_length': 25,
-        'answers_words_2_ints': answers_words_2_counts,
-        'questions_words_2_ints': questions_words_2_counts,
         'encoding_embedding_size': 512,
         'decoding_embedding_size': 512,
         'rnn_size': 512,
         'num_layers': 3,
         'learning_rate': 0.01,
         'gpu_dynamic_memory_growth': False,
-        'keep_probability': 0.5
+        'keep_probability': 0.5,
+
+        # Static values
+        'num_questions_word2count': ds.sub.num_questions_word2count,
+        'num_answers_word2count': ds.sub.num_answers_word2count,
+        'get_word2int': ds.sub.get_word2int,
     })
     model = Seq2Seq(
         model_hparams=model_hparams
     )
     model.compile()
-    '''
 
 
 if __name__ == "__main__":

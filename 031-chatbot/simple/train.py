@@ -10,15 +10,17 @@ def main():
   model_hparams = dict({
     'batch_size': 64,
     'sequence_length': 25,
-    'num_questions_word2count': ds.sub.num_questions_word2count,
-    'num_answers_word2count': ds.sub.num_answers_word2count,
     'encoding_embedding_size': 512,
     'decoding_embedding_size': 512,
     'rnn_size': 512,
     'num_layers': 3,
     'learning_rate': 0.01,
     'gpu_dynamic_memory_growth': False,
-    'keep_probability': 0.5
+    'keep_probability': 0.5,
+
+    'num_questions_word2count': ds.sub.num_questions_word2count,
+    'num_answers_word2count': ds.sub.num_answers_word2count,
+    'get_word2int': ds.sub.get_word2int,
   })
 
   epochs = 100

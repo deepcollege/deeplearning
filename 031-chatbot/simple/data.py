@@ -431,6 +431,9 @@ class Cornell:
         padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
         return padded_questions_in_batch, padded_answers_in_batch
 
+    def get_word2int(self, word):
+        return self.questions_words_2_counts[word]
+
 class Dataset:
     sub = None   # Dataset object
     type = 'cornell'
