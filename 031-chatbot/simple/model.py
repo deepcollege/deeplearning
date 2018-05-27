@@ -299,6 +299,8 @@ class Seq2Seq:
                 self.sequence_length: targets.shape[1],
                 self.keep_prob: self.model_hparams.keep_probability
             })
+        return batch_training_loss_error
+
 
     def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
                       answers_num_words, questions_num_words,
@@ -394,7 +396,6 @@ def main():
         'decoding_embedding_size': 512,
         'rnn_size': 512,
         'num_layers': 3,
-        'learning_rate': 0.01,
         'gpu_dynamic_memory_growth': False,
         'keep_probability': 0.5,
 
