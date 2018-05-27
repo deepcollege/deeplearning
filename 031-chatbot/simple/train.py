@@ -7,6 +7,9 @@ def main():
   # Dataset, default should be using Cornell
   ds = Dataset()
   ds.load()
+
+  # Hyperparams
+  epochs = 100
   model_hparams = dict({
     'batch_size': 64,
     'sequence_length': 25,
@@ -23,7 +26,12 @@ def main():
     'get_word2int': ds.sub.get_word2int,
   })
 
-  epochs = 100
+  # Compiling model
+  model = Seq2Seq(
+    model_hparams=model_hparams
+  )
+  model.compile()
+
   for epoch in range(1, epochs + 1):
     for batch_index, (padded_question_in_batch,
                       padded_answers_in_batch) in enumerate(ds.get_batches(25)):
