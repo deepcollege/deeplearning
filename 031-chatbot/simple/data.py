@@ -118,237 +118,244 @@ def get_cornell_data():
     return questions, answers
 
 
-def save_data(name, obj):
-    filename = './data/{}.pkl'.format(name)
-    if not os.path.exists(os.path.dirname(filename)):
-        try:
-            os.makedirs(os.path.dirname(filename))
-        except OSError as exc:  # Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
-    with open(filename.format(name), 'w+') as output:
-        pickle.dump(obj, output)
+class Dataset:
 
+    def save_data(self, name, obj):
+        filename = './data/{}.pkl'.format(name)
+        if not os.path.exists(os.path.dirname(filename)):
+            try:
+                os.makedirs(os.path.dirname(filename))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+        with open(filename.format(name), 'w+') as output:
+            pickle.dump(obj, output)
 
-def read_data(name):
-    filename = './data/{}.pkl'.format(name)
-    with open(filename, 'rb') as input:
-        return pickle.load(input)
+    def read_data(self, name):
+        filename = './data/{}.pkl'.format(name)
+        with open(filename, 'rb') as input:
+            return pickle.load(input)
 
+    def process_count_vectorization(self, type='cornell', lazy=True):
+        # Handle lazy load
+        if lazy:
+            try:
+                sorted_clean_questions = self.read_data('sorted_clean_questions')
+                sorted_clean_answers = self.read_data('sorted_clean_answers')
+                questions_words_2_counts = self.read_data(
+                    'questions_words_2_counts')
+                answers_words_2_counts = self.read_data('answers_words_2_counts')
+                answers_counts_2_words = self.read_data('answers_counts_2_words')
+                return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
+            except Exception as e:
+                print('Lazy load failed:', e)
+                pass
 
-def process_count_vectorization(type='cornell', lazy=True):
-    # Handle lazy load
-    if lazy:
-        try:
-            sorted_clean_questions = read_data('sorted_clean_questions')
-            sorted_clean_answers = read_data('sorted_clean_answers')
-            questions_words_2_counts = read_data('questions_words_2_counts')
-            answers_words_2_counts = read_data('answers_words_2_counts')
-            answers_counts_2_words = read_data('answers_counts_2_words')
-            return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
-        except Exception as e:
-            print('Lazy load failed:', e)
-            pass
+        questions = []
+        answers = []
 
-    questions = []
-    answers = []
+        if type == 'cornell':
+            questions, answers = get_cornell_data()
 
-    if type == 'cornell':
-        questions, answers = get_cornell_data()
+        # Step 4: cleaning the questions
+        pprint('---- Step 4 cleaning questions ----')
 
-    # Step 4: cleaning the questions
-    pprint('---- Step 4 cleaning questions ----')
+        clean_questions = []
+        for question in questions:
+            clean_questions.append(clean_text(question))
 
-    clean_questions = []
-    for question in questions:
-        clean_questions.append(clean_text(question))
+        pprint(clean_questions, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 5: Clean the answers
+    	'''
 
-    pprint(clean_questions, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 5: Clean the answers
-	'''
+        pprint('---- Step 5 cleaning answers ----')
+        clean_answers = []
+        for answer in answers:
+            clean_answers.append(clean_text(answer))
 
-    pprint('---- Step 5 cleaning answers ----')
-    clean_answers = []
-    for answer in answers:
-        clean_answers.append(clean_text(answer))
+        pprint(clean_answers, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 6: Creating a dictionary that maps each word to its number of occurences
+    	'''
 
-    pprint(clean_answers, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 6: Creating a dictionary that maps each word to its number of occurences
-	'''
+        word2count = {}
+        pprint('------ Step 6: counting words in questions ----')
 
-    word2count = {}
-    pprint('------ Step 6: counting words in questions ----')
+        word2count = convert_word_to_count(word2count, clean_questions)
 
-    word2count = convert_word_to_count(word2count, clean_questions)
+        pprint(word2count, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 7:
+    	For example, for a question: can we make this quick  roxanne korrine and andrew barrett are having an incredibly horrendous public break up on the quad  again
+    	It counts each word occurence such as "can" and accumulates the count into word2count dict
+    	'''
+        pprint('------ Step 6: counting words in answers ----')
 
-    pprint(word2count, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 7:
-	For example, for a question: can we make this quick  roxanne korrine and andrew barrett are having an incredibly horrendous public break up on the quad  again
-	It counts each word occurence such as "can" and accumulates the count into word2count dict
-	'''
-    pprint('------ Step 6: counting words in answers ----')
+        word2count = convert_word_to_count(word2count, clean_answers)
 
-    word2count = convert_word_to_count(word2count, clean_answers)
+        pprint(word2count, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 8: Creating word 2 int(count) by filtering words that are greater than the threshold
+    	'''
 
-    pprint(word2count, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 8: Creating word 2 int(count) by filtering words that are greater than the threshold
-	'''
+        pprint(
+            '------ Step 8: questions_words_2_int(count) filtered by threshold (>) ----'
+        )
+        threshold_questions = 20
+        questions_words_2_counts = {}
+        word_number = 0
+        for word, count in word2count.items():
+            if count >= threshold_questions:
+                questions_words_2_counts[word] = word_number
+                word_number += 1
 
-    pprint(
-        '------ Step 8: questions_words_2_int(count) filtered by threshold (>) ----'
-    )
-    threshold_questions = 20
-    questions_words_2_counts = {}
-    word_number = 0
-    for word, count in word2count.items():
-        if count >= threshold_questions:
-            questions_words_2_counts[word] = word_number
-            word_number += 1
+        pprint(questions_words_2_counts, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 9: Same as step 8 but for answers
+    	'''
+        pprint(
+            '------ Step 9: answers_words_2_counts(count) filtered by threshold (>) ----'
+        )
+        threshold_answers = 20
+        answers_words_2_counts = {}
+        word_number = 0
+        for word, count in word2count.items():
+            if count >= threshold_answers:
+                answers_words_2_counts[word] = word_number
+                word_number += 1
 
-    pprint(questions_words_2_counts, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 9: Same as step 8 but for answers
-	'''
-    pprint(
-        '------ Step 9: answers_words_2_counts(count) filtered by threshold (>) ----'
-    )
-    threshold_answers = 20
-    answers_words_2_counts = {}
-    word_number = 0
-    for word, count in word2count.items():
-        if count >= threshold_answers:
-            answers_words_2_counts[word] = word_number
-            word_number += 1
+        pprint(answers_words_2_counts, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 10: Adding the last tokens to these two dictionaries
+    	'''
+        pprint(
+            '------ Step 10: Adding token counts for questions_words_2_counts ----'
+        )
+        for token in tokens:
+            questions_words_2_counts[token] = len(questions_words_2_counts) + 1
+            pprint((token, ':', questions_words_2_counts[token]))
 
-    pprint(answers_words_2_counts, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 10: Adding the last tokens to these two dictionaries
-	'''
-    pprint(
-        '------ Step 10: Adding token counts for questions_words_2_counts ----'
-    )
-    for token in tokens:
-        questions_words_2_counts[token] = len(questions_words_2_counts) + 1
-        pprint((token, ':', questions_words_2_counts[token]))
+        print('\n\n')
 
-    print('\n\n')
+        pprint(
+            '------ Step 11: Adding token counts for answers_words_2_counts ----')
+        for token in tokens:
+            answers_words_2_counts[token] = len(answers_words_2_counts) + 1
+            pprint((token, ':', answers_words_2_counts[token]))
 
-    pprint(
-        '------ Step 11: Adding token counts for answers_words_2_counts ----')
-    for token in tokens:
-        answers_words_2_counts[token] = len(answers_words_2_counts) + 1
-        pprint((token, ':', answers_words_2_counts[token]))
+        print('\n\n')
+        '''
+    	Step 12: Creating an inverse dictionary of the word:count to count:word
+    	'''
+        pprint(
+            '------ Step 12: Creating an inverse dictionary of the word:count to count:word ----'
+        )
 
-    print('\n\n')
-    '''
-	Step 12: Creating an inverse dictionary of the word:count to count:word
-	'''
-    pprint(
-        '------ Step 12: Creating an inverse dictionary of the word:count to count:word ----'
-    )
+        answers_counts_2_words = {c: w for w, c, in
+                                  answers_words_2_counts.items()}
 
-    answers_counts_2_words = {c: w for w, c, in answers_words_2_counts.items()}
+        pprint(answers_counts_2_words, stream=Head(5))
+        print('\n\n')
 
-    pprint(answers_counts_2_words, stream=Head(5))
-    print('\n\n')
+        # TODO: Check the Seq2Seq diagram to understand this
+        pprint('------ Step 13: Adding the EOS to every answer ----')
 
-    # TODO: Check the Seq2Seq diagram to understand this
-    pprint('------ Step 13: Adding the EOS to every answer ----')
+        for i in range(len(clean_answers)):
+            clean_answers[i] += ' <EOS>'
 
-    for i in range(len(clean_answers)):
-        clean_answers[i] += ' <EOS>'
+        pprint(clean_answers, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 13: Translating all the questions and answers into counts
+    	and replacing all the words that were filtered out by OUT
+    	'''
+        pprint(
+            'Step 13: Translating all the questions into counts; replacing unknown words with OUT token'
+        )
 
-    pprint(clean_answers, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 13: Translating all the questions and answers into counts
-	and replacing all the words that were filtered out by OUT
-	'''
-    pprint(
-        'Step 13: Translating all the questions into counts; replacing unknown words with OUT token'
-    )
+        questions_to_counts = []
+        for question in clean_questions:
+            counts = []
+            for word in question.split():
+                if word not in questions_words_2_counts:
+                    counts.append(questions_words_2_counts['<OUT>'])
+                else:
+                    counts.append(questions_words_2_counts[word])
+            questions_to_counts.append(counts)
 
-    questions_to_counts = []
-    for question in clean_questions:
-        counts = []
-        for word in question.split():
-            if word not in questions_words_2_counts:
-                counts.append(questions_words_2_counts['<OUT>'])
-            else:
-                counts.append(questions_words_2_counts[word])
-        questions_to_counts.append(counts)
+        pprint(questions_to_counts, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 14: Same as step 13 except for it's targeting answers
+    	'''
+        pprint(
+            'Step 14: Translating all the answers into counts; replacing unknown words with OUT token'
+        )
 
-    pprint(questions_to_counts, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 14: Same as step 13 except for it's targeting answers
-	'''
-    pprint(
-        'Step 14: Translating all the answers into counts; replacing unknown words with OUT token'
-    )
+        answers_to_counts = []
+        for answer in clean_answers:
+            counts = []
+            for word in answer.split():
+                if word not in answers_words_2_counts:
+                    counts.append(answers_words_2_counts['<OUT>'])
+                else:
+                    counts.append(answers_words_2_counts[word])
+            answers_to_counts.append(counts)
 
-    answers_to_counts = []
-    for answer in clean_answers:
-        counts = []
-        for word in answer.split():
-            if word not in answers_words_2_counts:
-                counts.append(answers_words_2_counts['<OUT>'])
-            else:
-                counts.append(answers_words_2_counts[word])
-        answers_to_counts.append(counts)
+        pprint(answers_to_counts, stream=Head(5))
+        print('\n\n')
+        '''
+    	Step 15: Sorting questions and answers by the length of questions
+    	tip: look at CounterVectorizer
+    	'''
+        pprint('Step 15: Sorting questions and answers counts')
 
-    pprint(answers_to_counts, stream=Head(5))
-    print('\n\n')
-    '''
-	Step 15: Sorting questions and answers by the length of questions
-	tip: look at CounterVectorizer
-	'''
-    pprint('Step 15: Sorting questions and answers counts')
+        sorted_clean_questions = []
+        sorted_clean_answers = []
+        for length in range(1, 25 + 1):
+            for i in enumerate(questions_to_counts):
+                if len(i[1]) == length:
+                    sorted_clean_questions.append(questions_to_counts[i[0]])
+                    sorted_clean_answers.append(answers_to_counts[i[0]])
 
-    sorted_clean_questions = []
-    sorted_clean_answers = []
-    for length in range(1, 25 + 1):
-        for i in enumerate(questions_to_counts):
-            if len(i[1]) == length:
-                sorted_clean_questions.append(questions_to_counts[i[0]])
-                sorted_clean_answers.append(answers_to_counts[i[0]])
+        pprint('sorted_clean_questions')
+        print('')
+        pprint(sorted_clean_questions, stream=Head(5))
+        print('\n')
+        pprint('sorted_clean_answers')
+        print('')
+        pprint(sorted_clean_answers, stream=Head(5))
+        print('\n\n')
+        '''
+    	  1. sorted_clean_questions: list of processed questions
+    	  2. sorted_clean_answers: list of processed answers
+    	  3. answers_counts_2_words: list of ints lookup word table
+    	  '''
 
-    pprint('sorted_clean_questions')
-    print('')
-    pprint(sorted_clean_questions, stream=Head(5))
-    print('\n')
-    pprint('sorted_clean_answers')
-    print('')
-    pprint(sorted_clean_answers, stream=Head(5))
-    print('\n\n')
-    '''
-	  1. sorted_clean_questions: list of processed questions
-	  2. sorted_clean_answers: list of processed answers
-	  3. answers_counts_2_words: list of ints lookup word table
-	  '''
+        # Saving
+        if lazy:
+            self.save_data('sorted_clean_questions', sorted_clean_questions)
+            self.save_data('sorted_clean_answers', sorted_clean_answers)
+            self.save_data('questions_words_2_counts', questions_words_2_counts)
+            self.save_data('answers_words_2_counts', answers_words_2_counts)
+            self.save_data('answers_counts_2_words', answers_counts_2_words)
+        return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
 
-    # Saving
-    if lazy:
-        save_data('sorted_clean_questions', sorted_clean_questions)
-        save_data('sorted_clean_answers', sorted_clean_answers)
-        save_data('questions_words_2_counts', questions_words_2_counts)
-        save_data('answers_words_2_counts', answers_words_2_counts)
-        save_data('answers_counts_2_words', answers_counts_2_words)
-    return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
+    def get_batches(self, batch_size):
+        for i in range(0, batch_size):
+            yield i
 
 
 def main():
-    sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = process_count_vectorization(
+    ds = Dataset()
+    sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words = ds.process_count_vectorization(
     )
 
     print('---- Some questions ----')
