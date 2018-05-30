@@ -298,7 +298,7 @@ class Seq2Seq:
 				self.targets: targets,
 				self.lr: learning_rate,
 				self.sequence_length: targets.shape[1],
-				self.keep_prob: self.model_hparams.keep_probability
+				self.keep_prob: self.model_hparams['keep_probability']
 			})
 		return batch_training_loss_error
 

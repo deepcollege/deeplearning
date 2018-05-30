@@ -16,14 +16,14 @@ def main():
 	batch_size = 64
 	epochs = 100
 	learning_rate = 0.01
+	learning_rate_decay = 0.9
+	min_learning_rate = 0.0001
 	batch_index_check_training_loss = 100
 	batch_index_check_validation_loss = (ds.sub.num_questions_word2count // batch_size // 2) - 1
 	total_training_loss_error = 0
 	list_validation_loss_error = []
 	early_stopping_check = 0
 	early_stopping_stop = 1000
-	learning_rate_decay = 0.9
-	min_learning_rate = 0.0001
 	model_hparams = dict({
 		# Actual hyperparameters
 		'batch_size': batch_size,
@@ -34,6 +34,7 @@ def main():
 		'num_layers': 3,
 		'gpu_dynamic_memory_growth': False,
 		'keep_probability': 0.5,
+		'learning_rate': learning_rate,
 
 		# static values
 		'num_questions_word2count': ds.sub.num_questions_word2count,
@@ -55,13 +56,14 @@ def main():
 						' padded quest', padded_question_in_batch[0],
 						'padded ans', padded_answers_in_batch[0])
 
+			print('train batch success')
+			print(padded_question_in_batch.shape)
 			starting_time = time.time()
 			batch_training_loss_error = model.train_batch(
 				inputs=padded_question_in_batch,
 				targets=padded_answers_in_batch,
 				learning_rate=learning_rate
 			)
-
 			total_training_loss_error += batch_training_loss_error
 			ending_time = time.time()
 			batch_time = ending_time - starting_time
