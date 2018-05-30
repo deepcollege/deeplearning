@@ -425,13 +425,46 @@ class Cornell:
 			for sequence in batch_of_sequences
 		]
 
+	def _get_next_batch(self, batch_index, batch_size, questions, answers):
+		'''
+		Getting padded questions and answers of batch index and size
+		This method is only used internally.
+		:param batch_index:
+		:param batch_size:
+		:param questions:
+		:param answers:
+		:return:
+		'''
+		start_index = batch_index * batch_size
+		questions_in_batch = questions[start_index:start_index + batch_size]
+		answers_in_batch = answers[start_index:start_index + batch_size]
+		padded_questions_in_batch = np.array(self._apply_padding(questions_in_batch, self.questions_words_2_counts))
+		padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
+		return padded_questions_in_batch, padded_answers_in_batch
+
 	def get_next_batch(self, batch_index, batch_size):
+		'''
 		start_index = batch_index * batch_size
 		questions_in_batch = self.training_questions[start_index:start_index + batch_size]
 		answers_in_batch = self.training_answers[start_index:start_index + batch_size]
 		padded_questions_in_batch = np.array(self._apply_padding(questions_in_batch, self.questions_words_2_counts))
 		padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
 		return padded_questions_in_batch, padded_answers_in_batch
+		'''
+		return self._get_next_batch(
+			batch_index=batch_index,
+			batch_size=batch_size,
+			questions=self.training_questions,
+			answers=self.training_answers
+		)
+
+	def get_next_valid_batch(self, batch_index, batch_size):
+		return self._get_next_batch(
+			batch_index=batch_index,
+			batch_size=batch_size,
+			questions=self.validation_questions,
+			answers=self.validation_answers
+		)
 
 	def get_word2int(self, word):
 		return self.questions_words_2_counts[word]
@@ -455,6 +488,10 @@ class Dataset:
 		for batch_index in range(0, len(training_questions) // batch_size):
 			yield self.sub.get_next_batch(batch_index, batch_size)
 
+	def get_validation_batches(self, batch_size):
+		validation_questions = self.sub.sorted_clean_questions[:self.sub.training_validation_split]
+		for batch_index in range(0, len(validation_questions) // batch_size):
+			yield self.sub.get_next_valid_batch(batch_index, batch_size)
 
 def main():
 	ds = Dataset()
@@ -472,7 +509,10 @@ def main():
     print(ds.ds.answers_counts_2_words[ds.ds.sorted_clean_questions[0][0]])
     '''
 	for index, val in enumerate(ds.get_batches(25)):
-		print('index', index, 'val', val)
+		print('training: index', index, 'val', val)
+
+	for index, val in enumerate(ds.get_validation_batches(25)):
+		print('valid: index', index, 'val', val)
 
 
 if __name__ == "__main__":

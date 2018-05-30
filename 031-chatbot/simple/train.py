@@ -82,9 +82,7 @@ def main():
 
 				# TODO work on batch validation
 				for batch_index_validation, (padded_question_in_batch,
-																		 padded_answers_in_batch) in enumerate(
-					split_into_batches(validation_questions,
-														 validation_answers, batch_size)):
+																		 padded_answers_in_batch) in enumerate(ds.get_validation_batches(25)):
 					# Validation only contains new data that will be used for observations
 					# Probability is 1 when we are doing validation
 					batch_validation_loss_error = session.run(
