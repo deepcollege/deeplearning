@@ -50,7 +50,7 @@ def main():
 
 	for epoch in range(1, epochs + 1):
 		for batch_index, (padded_question_in_batch,
-											padded_answers_in_batch) in enumerate(ds.get_batches(25)):
+											padded_answers_in_batch) in enumerate(ds.get_batches(batch_size)):
 			print('epoch:', epoch,
 						'checking batch index', batch_index,
 						' padded quest', padded_question_in_batch[0],
@@ -89,7 +89,7 @@ def main():
 
 				# TODO work on batch validation
 				for batch_index_validation, (padded_question_in_batch,
-																		 padded_answers_in_batch) in enumerate(ds.get_validation_batches(25)):
+																		 padded_answers_in_batch) in enumerate(ds.get_validation_batches(batch_size)):
 					# Validation only contains new data that will be used for observations
 					# Probability is 1 when we are doing validation
 					batch_validation_loss_error = model.validate_batch(

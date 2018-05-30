@@ -89,6 +89,7 @@ class Seq2Seq:
 	def preprocess_targets(self, targets, get_word2int, batch_size):
 		''' Preprocessing the targets '''
 		# Everything except for the first token
+		print('checking get word2int ', get_word2int('<SOS>'))
 		left_side = tf.fill([batch_size, 1], get_word2int('<SOS>'))
 		# Grab everything except for the last token
 		# Answers without the end
@@ -171,8 +172,9 @@ class Seq2Seq:
 				training_predictions,
 				targets,
 				tf.ones([
-					self.input_shape[0], self.model_hparams['sequence_length']
+					self.input_shape[0], self.sequence_length
 				]))
+
 			optimizer = tf.train.AdamOptimizer(self.model_hparams['learning_rate'])
 			gradients = optimizer.compute_gradients(loss_error)
 			# Gradient clipping
@@ -292,6 +294,7 @@ class Seq2Seq:
 			return test_predictions
 
 	def train_batch(self, inputs, targets, learning_rate):
+		print('check keep prob', self.model_hparams['keep_probability'])
 		_, batch_training_loss_error = self.session.run(
 			[self.optimizer_gradient_clipping, self.loss_error], {
 				self.inputs: inputs,
