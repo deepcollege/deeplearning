@@ -90,16 +90,6 @@ def main():
 																		 padded_answers_in_batch) in enumerate(ds.get_validation_batches(25)):
 					# Validation only contains new data that will be used for observations
 					# Probability is 1 when we are doing validation
-					'''
-					batch_validation_loss_error = session.run(
-						loss_error, {
-							inputs: padded_question_in_batch,
-							targets: padded_answers_in_batch,
-							lr: learning_rate,
-							sequence_length: padded_answers_in_batch.shape[1],
-							keep_prob: 1
-						})
-					'''
 					batch_validation_loss_error = model.validate_batch(
 						inputs=padded_question_in_batch,
 						targets=padded_answers_in_batch,
