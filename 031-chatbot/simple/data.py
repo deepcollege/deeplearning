@@ -114,9 +114,8 @@ class Cornell:
 
 	def _get_data(self):
 		'''
-
-        :return: raw questions and answers
-        '''
+		:return: raw questions and answers
+		'''
 		lines = io.open(
 			'simple/inputs/cornell/movie_lines.txt',
 			encoding='utf8',
@@ -128,8 +127,8 @@ class Cornell:
 
 		id2line = {}
 		'''
-      Step 1: Creating a dict that maps each line to its id
-      '''
+		Step 1: Creating a dict that maps each line to its id
+		'''
 
 		pprint('---- Step 1 creating a dict of id2lines ----')
 		pprint('Original lines')
@@ -484,13 +483,13 @@ class Dataset:
 			raise Exception('Invalid dataset!')
 
 	def get_batches(self, batch_size):
-		training_questions = self.sub.sorted_clean_questions[self.sub.training_validation_split:]
-		for batch_index in range(0, len(training_questions) // batch_size):
+		# training_questions = self.sub.sorted_clean_questions[self.sub.training_validation_split:]
+		for batch_index in range(0, len(self.sub.sorted_clean_questions) // batch_size):
 			yield self.sub.get_next_batch(batch_index, batch_size)
 
 	def get_validation_batches(self, batch_size):
-		validation_questions = self.sub.sorted_clean_questions[:self.sub.training_validation_split]
-		for batch_index in range(0, len(validation_questions) // batch_size):
+		# validation_questions = self.sub.sorted_clean_questions[:self.sub.training_validation_split]
+		for batch_index in range(0, len(self.sub.validation_questions) // batch_size):
 			yield self.sub.get_next_valid_batch(batch_index, batch_size)
 
 def main():

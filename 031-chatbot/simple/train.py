@@ -9,6 +9,9 @@ def main():
 	ds = Dataset()
 	ds.load()
 
+	# Model savepoint
+	checkpoint = '/output/chatbot_weights.ckpt'
+
 	# Hyperparams
 	batch_size = 64
 	epochs = 100
@@ -19,6 +22,8 @@ def main():
 	list_validation_loss_error = []
 	early_stopping_check = 0
 	early_stopping_stop = 1000
+	learning_rate_decay = 0.9
+	min_learning_rate = 0.0001
 	model_hparams = dict({
 		# Actual hyperparameters
 		'batch_size': batch_size,
@@ -85,6 +90,7 @@ def main():
 																		 padded_answers_in_batch) in enumerate(ds.get_validation_batches(25)):
 					# Validation only contains new data that will be used for observations
 					# Probability is 1 when we are doing validation
+					'''
 					batch_validation_loss_error = session.run(
 						loss_error, {
 							inputs: padded_question_in_batch,
@@ -93,12 +99,18 @@ def main():
 							sequence_length: padded_answers_in_batch.shape[1],
 							keep_prob: 1
 						})
+					'''
+					batch_validation_loss_error = model.validate_batch(
+						inputs=padded_question_in_batch,
+						targets=padded_answers_in_batch,
+						learning_rate=learning_rate
+					)
 
 					total_validation_loss_error += batch_validation_loss_error
 				ending_time = time.time()
 				batch_time = ending_time - starting_time
 				average_validation_loss_error = total_validation_loss_error / (
-					len(validation_questions) / batch_size)
+					len(ds.sub.validation_questions) / batch_size)
 				print('Validation Loss Error: {:>6.3f}, '
 							'Batch Validation Time: {:d} seconds'
 							.format(average_validation_loss_error, int(batch_time)))
@@ -115,8 +127,7 @@ def main():
 				if average_validation_loss_error <= min(list_validation_loss_error):
 					print('I speak better now!!')
 					early_stopping_check = 0
-					saver = tf.train.Saver()
-					saver.save(session, checkpoint)
+					model.save_model(checkpoint)
 				else:
 					print('Sorry I do not speak better, I need to practice more')
 					early_stopping_check += 1

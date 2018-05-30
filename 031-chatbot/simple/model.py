@@ -302,6 +302,22 @@ class Seq2Seq:
 			})
 		return batch_training_loss_error
 
+	def validate_batch(self, inputs, targets, learning_rate):
+		batch_validation_loss_error = self.session.run(
+			self.loss_error, {
+				self.inputs: inputs,
+				self.targets: targets,
+				self.lr: learning_rate,
+				self.sequence_length: targets.shape[1],
+				self.keep_prob: 1
+			}
+		)
+		return batch_validation_loss_error
+
+	def save_model(self, checkpoint):
+		saver = tf.train.Saver()
+		saver.save(self.session, checkpoint)
+
 	def _build_graph(self, inputs, targets, keep_prob, batch_size, sequence_length,
 									 answers_num_words, questions_num_words,
 									 encoder_embedding_size, decoder_embedding_size, rnn_size,
@@ -370,8 +386,7 @@ class Seq2Seq:
 		writer.add_graph(self.session.graph)
 
 	def _create_session(self):
-		"""Initialize the TensorFlow session
-        """
+		"""Initialize the TensorFlow session"""
 		if self.model_hparams['gpu_dynamic_memory_growth']:
 			config = tf.ConfigProto()
 			config.gpu_options.allow_growth = True
