@@ -22,8 +22,12 @@
 # Datasets
 .csv
 
+# python
+*.pyc
+
 # Kaggle folders
 inputs/
+030-chatbot/simple/output/
 output/
 
 # Logs

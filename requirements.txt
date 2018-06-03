@@ -1,0 +1,5 @@
+faker===0.8.14
+babel
+keras
+tqdm
+request
