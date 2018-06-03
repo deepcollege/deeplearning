@@ -40,38 +40,20 @@ class Seq2Seq:
 		# Getting the shape of the inputs tensor
 		self.input_shape = tf.shape(self.inputs)
 
-		if self.mode == 'training':
-			# Getting the training and testing predictions
-			self.optimizer_gradient_clipping, self.loss_error = self._build_graph(
-				tf.reverse(self.inputs, [-1]),  # why reverse inputs? read the seq2seq doc
-				self.targets,
-				self.keep_prob,
-				self.model_hparams['batch_size'],
-				self.sequence_length,
-				self.model_hparams['num_questions_word2count'],
-				self.model_hparams['num_answers_word2count'],
-				self.model_hparams['encoding_embedding_size'],
-				self.model_hparams['decoding_embedding_size'],
-				self.model_hparams['rnn_size'],
-				self.model_hparams['num_layers'],
-				self.model_hparams['get_word2int'])
-
-		elif self.mode == 'testing':
-			self.test_predictions = self._build_graph(
-				tf.reverse(self.inputs, [-1]),  # why reverse inputs? read the seq2seq doc
-				self.targets,
-				self.keep_prob,
-				self.model_hparams['batch_size'],
-				self.sequence_length,
-				self.model_hparams['num_questions_word2count'],
-				self.model_hparams['num_answers_word2count'],
-				self.model_hparams['encoding_embedding_size'],
-				self.model_hparams['decoding_embedding_size'],
-				self.model_hparams['rnn_size'],
-				self.model_hparams['num_layers'],
-				self.model_hparams['get_word2int'])
-		else:
-			raise ValueError('Invalid mode detected!', self.mode)
+		# Getting the training and testing predictions
+		self.optimizer_gradient_clipping, self.loss_error, self.test_predictions = self._build_graph(
+			tf.reverse(self.inputs, [-1]),  # why reverse inputs? read the seq2seq doc
+			self.targets,
+			self.keep_prob,
+			self.model_hparams['batch_size'],
+			self.sequence_length,
+			self.model_hparams['num_questions_word2count'],
+			self.model_hparams['num_answers_word2count'],
+			self.model_hparams['encoding_embedding_size'],
+			self.model_hparams['decoding_embedding_size'],
+			self.model_hparams['rnn_size'],
+			self.model_hparams['num_layers'],
+			self.model_hparams['get_word2int'])
 
 		# Init before returning
 		# TODO: Refactor
@@ -89,7 +71,6 @@ class Seq2Seq:
 	def preprocess_targets(self, targets, get_word2int, batch_size):
 		''' Preprocessing the targets '''
 		# Everything except for the first token
-		print('checking get word2int ', get_word2int('<SOS>'))
 		left_side = tf.fill([batch_size, 1], get_word2int('<SOS>'))
 		# Grab everything except for the last token
 		# Answers without the end
@@ -264,34 +245,31 @@ class Seq2Seq:
 		# training_predictions = logits
 		# What is logits layer?
 		# https://stackoverflow.com/questions/41455101/what-is-the-meaning-of-the-word-logits-in-tensorflow
-		if self.mode == 'training':
-			optimizer_gradient_clipping, loss_error = self.decode_training_set(
-				encoder_state,
-				decoder_cell,
-				decoder_embedded_input,
-				sequence_length,
-				decoding_scope,
-				output_function,
-				keep_prob,
-				batch_size,
-				targets)
-			return optimizer_gradient_clipping, loss_error
-		elif self.mode == 'testing':
-			decoding_scope.reuse_variables()
-			# SOS -> start of sentence
-			# EOS -> End of sentence
-			test_predictions = self.decode_test_set(
-				encoder_state,
-				decoder_cell,
-				decoder_embedding_matrix,
-				get_word2int('<SOS>'),
-				get_word2int('<EOS>'),
-				sequence_length - 1,
-				num_words,
-				decoding_scope,
-				output_function,
-				keep_prob, batch_size)
-			return test_predictions
+		optimizer_gradient_clipping, loss_error = self.decode_training_set(
+			encoder_state,
+			decoder_cell,
+			decoder_embedded_input,
+			sequence_length,
+			decoding_scope,
+			output_function,
+			keep_prob,
+			batch_size,
+			targets)
+		decoding_scope.reuse_variables()
+		# SOS -> start of sentence
+		# EOS -> End of sentence
+		test_predictions = self.decode_test_set(
+			encoder_state,
+			decoder_cell,
+			decoder_embedding_matrix,
+			get_word2int('<SOS>'),
+			get_word2int('<EOS>'),
+			sequence_length - 1,
+			num_words,
+			decoding_scope,
+			output_function,
+			keep_prob, batch_size)
+		return optimizer_gradient_clipping, loss_error, test_predictions
 
 	def train_batch(self, inputs, targets, learning_rate):
 		print('check keep prob', self.model_hparams['keep_probability'])
@@ -351,38 +329,20 @@ class Seq2Seq:
 				)
 				decoder_embedded_input = tf.nn.embedding_lookup(decoder_embeddings_matrix,
 																												preprocessed_targets)
-				if self.mode == 'training':
-					optimizer_gradient_clipping, loss_error = self.decoder_rnn(
-						decoder_embedded_input,
-						decoder_embeddings_matrix,
-						encoder_state,
-						questions_num_words,
-						sequence_length,
-						rnn_size,
-						num_layers,
-						get_word2int,
-						keep_prob,
-						batch_size,
-						decoding_scope,
-						targets)
-					return optimizer_gradient_clipping, loss_error
-				elif self.mode == 'testing':
-					test_predictions = self.decoder_rnn(
-						decoder_embedded_input,
-						decoder_embeddings_matrix,
-						encoder_state,
-						questions_num_words,
-						sequence_length,
-						rnn_size,
-						num_layers,
-						get_word2int,
-						keep_prob,
-						batch_size,
-						decoding_scope,
-						targets)
-					return test_predictions
-				else:
-					raise ValueError('Invalid mode detected!', self.mode)
+				optimizer_gradient_clipping, loss_error, test_predictions = self.decoder_rnn(
+					decoder_embedded_input,
+					decoder_embeddings_matrix,
+					encoder_state,
+					questions_num_words,
+					sequence_length,
+					rnn_size,
+					num_layers,
+					get_word2int,
+					keep_prob,
+					batch_size,
+					decoding_scope,
+					targets)
+				return optimizer_gradient_clipping, loss_error, test_predictions
 
 	def _build_tensorboard(self):
 		writer = tf.summary.FileWriter('./output/chatbot-tfboard/2')
@@ -416,7 +376,7 @@ def main():
 		'num_layers': 3,
 		'gpu_dynamic_memory_growth': False,
 		'keep_probability': 0.5,
-
+		'learning_rate': 0.1,
 		# Static values
 		'num_questions_word2count': ds.sub.num_questions_word2count,
 		'num_answers_word2count': ds.sub.num_answers_word2count,

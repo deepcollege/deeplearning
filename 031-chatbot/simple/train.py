@@ -12,6 +12,15 @@ def main():
 	# Model savepoint
 	checkpoint = '/output/chatbot_weights.ckpt'
 
+	# Dummy
+	sample_questions = [
+		'hello',
+		'how are you?',
+		'what do you want?',
+		'who are you?',
+		'I am your creator'
+	]
+
 	# Hyperparams
 	batch_size = 64
 	epochs = 100
@@ -51,13 +60,7 @@ def main():
 	for epoch in range(1, epochs + 1):
 		for batch_index, (padded_question_in_batch,
 											padded_answers_in_batch) in enumerate(ds.get_batches(batch_size)):
-			print('epoch:', epoch,
-						'checking batch index', batch_index,
-						' padded quest', padded_question_in_batch[0],
-						'padded ans', padded_answers_in_batch[0])
 
-			print('train batch success')
-			print(padded_question_in_batch.shape)
 			starting_time = time.time()
 			batch_training_loss_error = model.train_batch(
 				inputs=padded_question_in_batch,
