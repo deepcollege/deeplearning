@@ -35,6 +35,17 @@ def clean_text(text):
 	return text
 
 
+def convert_string2int(question, word2int):
+	'''
+	Converting the raw string question to an integer representation
+	:param question:
+	:param word2int:
+	:return:
+	'''
+	question = clean_text(question)
+	return [word2int.get(word, word2int['<OUT>']) for word in question.split()]
+
+
 def convert_word_to_count(counter={}, doc=[]):
 	'''
     In-memory based simple word_to_count

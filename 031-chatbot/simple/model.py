@@ -1,4 +1,6 @@
+import numpy as np
 import tensorflow as tf
+from .data import convert_string2int
 
 
 class Seq2Seq:
@@ -294,6 +296,39 @@ class Seq2Seq:
 			}
 		)
 		return batch_validation_loss_error
+
+	def inference(self, question, questions_words_2_ints, answers_ints_2_words):
+		'''
+		Converting raw question into an answer using inference fetch
+		:param question:
+		:param questions_words_2_ints:
+		:param answers_ints_2_words:
+		:return:
+		'''
+		question = convert_string2int(question, questions_words_2_ints)
+		question = question + [questions_words_2_ints['<PAD>']] * (
+		25 - len(question))
+		# Creating a fake batch because it always wants the batch size of 25
+		fake_batch = np.zeros((self.model_hparams.batch_size, 25))
+		fake_batch[0] = question
+		# We are interested in the first element
+		predicted_answer = self.session.run(
+			self.test_predictions, {self.inputs: fake_batch, self.keep_prob: 0.5})[0]
+		answer = ''
+		# Getting values of each token ID
+		for i in np.argmax(predicted_answer, 1):
+			if answers_ints_2_words[i] == 'i':
+				token = 'I'
+			elif answers_ints_2_words[i] == '<EOS>':
+				token = '.'
+			elif answers_ints_2_words[i] == '<OUT>':
+				token = 'out'
+			else:
+				token = ' ' + answers_ints_2_words[i]
+			answer += token
+			if token == '.':
+				break
+		return answer
 
 	def save_model(self, checkpoint):
 		saver = tf.train.Saver()
