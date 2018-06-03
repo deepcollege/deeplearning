@@ -1,8 +1,29 @@
 import time
+import random
 import tensorflow as tf
 from .data import Dataset
 from .model import Seq2Seq
 
+# Dummy
+sample_questions = [
+	'hello',
+	'how are you?',
+	'what do you want?',
+	'who are you?',
+	'I am your creator'
+]
+
+def sample_reply(model, ds):
+	sample_question = random.choice(sample_questions)
+	sample_answer = model.inference(
+		question=sample_question,
+		questions_words_2_ints=ds.sub.questions_words_2_counts,
+		answers_ints_2_words=ds.sub.answers_counts_2_words
+	)
+	print('Question: {question}\n'
+				'Answer: {answer}'.format(
+		question=sample_question,
+		answer=sample_answer))
 
 def main():
 	# Dataset, default should be using Cornell
@@ -11,15 +32,6 @@ def main():
 
 	# Model savepoint
 	checkpoint = '/output/chatbot_weights.ckpt'
-
-	# Dummy
-	sample_questions = [
-		'hello',
-		'how are you?',
-		'what do you want?',
-		'who are you?',
-		'I am your creator'
-	]
 
 	# Hyperparams
 	batch_size = 64
@@ -70,6 +82,9 @@ def main():
 			total_training_loss_error += batch_training_loss_error
 			ending_time = time.time()
 			batch_time = ending_time - starting_time
+
+  		# Smapling to check current progress
+			sample_reply(model, ds)
 			# At every batch_index_check_training_loss (e.g. 100), we will print the error
 			if batch_index % batch_index_check_training_loss == 0:
 				# :>3 means 3 figures; :>4 means 4 figures; .3f means float with 3 decimals
@@ -121,7 +136,11 @@ def main():
 				# do an earlystopping
 				if average_validation_loss_error <= min(list_validation_loss_error):
 					print('I speak better now!!')
+					# Sampling
+					sample_reply(model, ds)
+
 					early_stopping_check = 0
+					# Save weights
 					model.save_model(checkpoint)
 				else:
 					print('Sorry I do not speak better, I need to practice more')
