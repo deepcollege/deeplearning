@@ -3,6 +3,8 @@ import io
 import re
 import pickle
 import errno
+from .utils.file_helper import file_exists, try_create_dir
+from urllib2 import urlopen
 import numpy as np
 from pprint import pprint
 
@@ -90,6 +92,10 @@ def read_file_data(name):
 	with open(filename, 'rb') as input:
 		return pickle.load(input)
 
+cornell_file_urls = [
+	('movie_lines.txt', 'https://www.dropbox.com/s/sljz3iejzfrwf5b/movie_lines.txt?dl=1'),
+	('movie_conversations.txt', 'https://www.dropbox.com/s/nk0r6raow7xkr8b/movie_conversations.txt?dl=1')
+]
 
 class Cornell:
 	sorted_clean_questions = None
@@ -122,6 +128,22 @@ class Cornell:
 		self.training_answers = self.sorted_clean_answers[self.training_validation_split:]
 		self.validation_questions = self.sorted_clean_questions[:self.training_validation_split]
 		self.validation_answers = self.sorted_clean_answers[:self.training_validation_split]
+
+	def download_if_not_exist(self):
+		for (fname, furl) in cornell_file_urls:
+			remote_file = urlopen(furl)
+			data = remote_file.read()
+			remote_file.close()
+			dir_path = os.path.dirname(os.path.realpath(__file__))
+			input_folder = 'inputs/cornell'
+			full_dirname = '/'.join([dir_path, input_folder])
+			# Try creating the dir
+			try_create_dir(full_dirname)
+
+			# Write the file
+			full_fname = '/'.join([full_dirname, fname])
+			with open(full_fname, 'w') as f:
+				f.write(data)
 
 	def _get_data(self):
 		'''
@@ -506,24 +528,14 @@ class Dataset:
 def main():
 	ds = Dataset()
 	ds.load()
+	ds.sub.download_if_not_exist()
 	'''
-    print('---- Some questions ----')
-    print(ds.ds.sorted_clean_questions[0])
-    print(ds.ds.sorted_clean_questions[1])
-    print(ds.ds.sorted_clean_questions[2])
-    print('---- Some answers ------')
-    print(ds.ds.sorted_clean_answers[0])
-    print(ds.ds.sorted_clean_answers[1])
-    print(ds.ds.sorted_clean_answers[2])
-    print('---- Looking up keys ----')
-    print(ds.ds.answers_counts_2_words[ds.ds.sorted_clean_questions[0][0]])
-    '''
 	for index, val in enumerate(ds.get_batches(25)):
 		print('training: index', index, 'val', val)
 
 	for index, val in enumerate(ds.get_validation_batches(25)):
 		print('valid: index', index, 'val', val)
-
+	'''
 
 if __name__ == "__main__":
 	main()
