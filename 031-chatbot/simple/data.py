@@ -131,19 +131,19 @@ class Cornell:
 
 	def download_if_not_exist(self):
 		for (fname, furl) in cornell_file_urls:
-			remote_file = urlopen(furl)
-			data = remote_file.read()
-			remote_file.close()
 			dir_path = os.path.dirname(os.path.realpath(__file__))
 			input_folder = 'inputs/cornell'
 			full_dirname = '/'.join([dir_path, input_folder])
-			# Try creating the dir
-			try_create_dir(full_dirname)
-
-			# Write the file
 			full_fname = '/'.join([full_dirname, fname])
-			with open(full_fname, 'w') as f:
-				f.write(data)
+			if file_exists(full_dirname):
+				remote_file = urlopen(furl)
+				data = remote_file.read()
+				remote_file.close()
+				# Try creating the dir
+				try_create_dir(full_dirname)
+				# Write the file
+				with open(full_fname, 'w') as f:
+					f.write(data)
 
 	def _get_data(self):
 		'''
