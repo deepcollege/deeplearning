@@ -130,12 +130,16 @@ class Cornell:
 		self.validation_answers = self.sorted_clean_answers[:self.training_validation_split]
 
 	def download_if_not_exist(self):
+		'''
+		Downloads required data file for cornell if it does not exists already
+		:return:
+		'''
 		for (fname, furl) in cornell_file_urls:
 			dir_path = os.path.dirname(os.path.realpath(__file__))
 			input_folder = 'inputs/cornell'
 			full_dirname = '/'.join([dir_path, input_folder])
 			full_fname = '/'.join([full_dirname, fname])
-			if file_exists(full_dirname):
+			if not file_exists(full_dirname):
 				remote_file = urlopen(furl)
 				data = remote_file.read()
 				remote_file.close()
