@@ -60,6 +60,9 @@ class Seq2Seq:
 		# Init before returning
 		# TODO: Refactor
 		self.session.run(tf.global_variables_initializer())
+
+		tf.summary.scalar("sequence_loss", self.loss_error)
+		tf.summary.scalar("learning_rate", self.lr)
 		self._build_tensorboard()
 
 	def model_inputs(self):
@@ -167,6 +170,9 @@ class Seq2Seq:
 													 if grad_tensor is not None]
 			optimizer_gradient_clipping = optimizer.apply_gradients(
 				clipped_gradients)
+			# TODO: Fix below
+			# tf.summary.scalar("gradient_norm", gradients)
+			# tf.summary.scalar("clipped_gradient", optimizer_gradient_clipping)
 			return optimizer_gradient_clipping, loss_error
 
 	def decode_test_set(self,
@@ -380,8 +386,8 @@ class Seq2Seq:
 				return optimizer_gradient_clipping, loss_error, test_predictions
 
 	def _build_tensorboard(self):
-		writer = tf.summary.FileWriter('./output/chatbot-tfboard/2')
-		writer.add_graph(self.session.graph)
+		self.merged_summary = tf.summary.merge_all()
+		tf.summary.FileWriter('./output/chatbot-tfboard/2', self.session.graph)
 
 	def _create_session(self):
 		"""Initialize the TensorFlow session"""
