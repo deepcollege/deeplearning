@@ -4,7 +4,7 @@ import re
 import pickle
 import errno
 from .utils.file_helper import file_exists, try_create_dir
-from urllib2 import urlopen
+from urllib.request import urlopen
 import numpy as np
 from pprint import pprint
 
@@ -78,7 +78,7 @@ def save_file_data(name, obj):
 		except OSError as exc:  # Guard against race condition
 			if exc.errno != errno.EEXIST:
 				raise
-	with open(filename.format(name), 'w+') as output:
+	with open(filename.format(name), 'wb+') as output:
 		pickle.dump(obj, output)
 
 
@@ -135,30 +135,33 @@ class Cornell:
 		:return:
 		'''
 		for (fname, furl) in cornell_file_urls:
-			dir_path = os.path.dirname(os.path.realpath(__file__))
-			input_folder = 'inputs/cornell'
-			full_dirname = '/'.join([dir_path, input_folder])
+			# dir_path = os.path.dirname(os.path.realpath(__file__))
+			input_folder = '/inputs/cornell'
+			full_dirname = input_folder
 			full_fname = '/'.join([full_dirname, fname])
-			if not file_exists(full_dirname):
+			if not file_exists(full_fname):
 				remote_file = urlopen(furl)
 				data = remote_file.read()
 				remote_file.close()
 				# Try creating the dir
 				try_create_dir(full_dirname)
+				print('download if not exist fname:', fname, 'url:', furl)
 				# Write the file
-				with open(full_fname, 'w') as f:
+				with open(full_fname, 'wb') as f:
 					f.write(data)
 
 	def _get_data(self):
 		'''
 		:return: raw questions and answers
 		'''
+		print('Checking inputs cornell folder')
+		print(os.listdir('/inputs/cornell'))
 		lines = io.open(
-			'simple/inputs/cornell/movie_lines.txt',
+			'/inputs/cornell/movie_lines.txt',
 			encoding='utf8',
 			errors='ignore').read().split('\n')
 		conversations = io.open(
-			'simple/inputs/cornell/movie_conversations.txt',
+			'/inputs/cornell/movie_conversations.txt',
 			encoding='utf8',
 			errors='ignore').read().split('\n')
 
@@ -515,6 +518,7 @@ class Dataset:
 			self.sub = Cornell()
 
 		if self.sub:
+			self.sub.download_if_not_exist()
 			self.sub.load()
 		else:
 			raise Exception('Invalid dataset!')
@@ -532,7 +536,6 @@ class Dataset:
 def main():
 	ds = Dataset()
 	ds.load()
-	ds.sub.download_if_not_exist()
 	'''
 	for index, val in enumerate(ds.get_batches(25)):
 		print('training: index', index, 'val', val)

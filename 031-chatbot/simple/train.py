@@ -70,6 +70,7 @@ def main():
 	model.compile()
 
 	for epoch in range(1, epochs + 1):
+		sample_reply(model, ds)
 		for batch_index, (padded_question_in_batch,
 											padded_answers_in_batch) in enumerate(ds.get_batches(batch_size)):
 
@@ -84,7 +85,6 @@ def main():
 			batch_time = ending_time - starting_time
 
   		# Smapling to check current progress
-			sample_reply(model, ds)
 			# At every batch_index_check_training_loss (e.g. 100), we will print the error
 			if batch_index % batch_index_check_training_loss == 0:
 				# :>3 means 3 figures; :>4 means 4 figures; .3f means float with 3 decimals
