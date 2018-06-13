@@ -387,7 +387,7 @@ class Seq2Seq:
 
 	def _build_tensorboard(self):
 		self.merged_summary = tf.summary.merge_all()
-		tf.summary.FileWriter('./output/chatbot-tfboard/2', self.session.graph)
+		tf.summary.FileWriter('/output/chatbot-tfboard/2', self.session.graph)
 
 	def _create_session(self):
 		"""Initialize the TensorFlow session"""
