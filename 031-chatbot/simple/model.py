@@ -280,7 +280,6 @@ class Seq2Seq:
 		return optimizer_gradient_clipping, loss_error, test_predictions
 
 	def train_batch(self, inputs, targets, learning_rate):
-		print('check keep prob', self.model_hparams['keep_probability'])
 		_, batch_training_loss_error = self.session.run(
 			[self.optimizer_gradient_clipping, self.loss_error], {
 				self.inputs: inputs,
