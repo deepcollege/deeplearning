@@ -3,8 +3,9 @@ import io
 import re
 import pickle
 import errno
-from .utils.file_helper import file_exists, try_create_dir
+# from .utils.file_helper import file_exists, try_create_dir
 from urllib.request import urlopen
+from urllib2 import urlopen
 import numpy as np
 from pprint import pprint
 
@@ -525,7 +526,7 @@ class Dataset:
 
 	def get_batches(self, batch_size):
 		# training_questions = self.sub.sorted_clean_questions[self.sub.training_validation_split:]
-		for batch_index in range(0, len(self.sub.sorted_clean_questions) // batch_size):
+		for batch_index in range(0, len(self.sub.training_questions) // batch_size):
 			yield self.sub.get_next_batch(batch_index, batch_size)
 
 	def get_validation_batches(self, batch_size):
@@ -536,13 +537,13 @@ class Dataset:
 def main():
 	ds = Dataset()
 	ds.load()
-	'''
+
 	for index, val in enumerate(ds.get_batches(25)):
 		print('training: index', index, 'val', val)
 
 	for index, val in enumerate(ds.get_validation_batches(25)):
 		print('valid: index', index, 'val', val)
-	'''
+
 
 if __name__ == "__main__":
 	main()

@@ -1,6 +1,5 @@
 import time
 import random
-import tensorflow as tf
 from .data import Dataset
 from .model import Seq2Seq
 
