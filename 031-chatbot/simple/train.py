@@ -132,7 +132,7 @@ def main():
 				# Early stopping
 				list_validation_loss_error.append(average_validation_loss_error)
 				# If average_validation_loss_error is lower than every validation_loss_error_we got
-				# do an earlystopping
+				# do an early stopping
 				if average_validation_loss_error <= min(list_validation_loss_error):
 					print('I speak better now!!')
 					# Sampling
