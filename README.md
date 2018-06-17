@@ -135,6 +135,11 @@ path such as `C://Users/Desktop/code` into `/c/Users/Desktop/code`
 We follow PEP8 standard to maintain high code quality. To automate code formatting process
 it is recommended to use `yapf` before making any commits. 
 
+
 ```bash
 $ yapf -i **/*.py
 ```
+
+###### yapf installation
+
+[https://github.com/google/yapf#installation](https://github.com/google/yapf#installation)
