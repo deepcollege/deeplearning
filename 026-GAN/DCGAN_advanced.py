@@ -5,14 +5,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 
 class DCGAN:
-    def __init__(self,
-                 img_length,
-                 num_colors,
-                 d_sizes,
-                 g_sizes,
-                 keep_prob,
-                 learning_rate,
-                 n_noise):
+    def __init__(self, img_length, num_colors, d_sizes, g_sizes, keep_prob, learning_rate, n_noise):
 
         self.img_length = img_length
         self.num_colors = num_colors
@@ -23,20 +16,14 @@ class DCGAN:
 
         # For mnist, img_length = 28, num_colors = 1
         self.real_images = tf.placeholder(
-            dtype=tf.float32,
-            shape=[None, img_length, img_length, num_colors],
-            name='real_images')
+            dtype=tf.float32, shape=[None, img_length, img_length, num_colors], name='real_images')
 
-        self.noise = tf.placeholder(
-            dtype=tf.float32, shape=[None, self.latent_dims])
+        self.noise = tf.placeholder(dtype=tf.float32, shape=[None, self.latent_dims])
         self.is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
-        self.g = self.build_generator(
-            self.noise, keep_prob, self.is_training, g_sizes=g_sizes)
-        d_real = self.build_discriminator(
-            self.real_images, reuse=None, keep_prob=keep_prob, d_sizes=d_sizes)
-        d_fake = self.build_discriminator(
-            self.g, reuse=True, keep_prob=keep_prob, d_sizes=d_sizes)
+        self.g = self.build_generator(self.noise, keep_prob, self.is_training, g_sizes=g_sizes)
+        d_real = self.build_discriminator(self.real_images, reuse=None, keep_prob=keep_prob, d_sizes=d_sizes)
+        d_fake = self.build_discriminator(self.g, reuse=True, keep_prob=keep_prob, d_sizes=d_sizes)
 
         vars_g = [var for var in tf.trainable_variables() if 'gen' in var.name]
         vars_d = [var for var in tf.trainable_variables() if 'disc' in var.name]
@@ -65,15 +52,13 @@ class DCGAN:
         img_h = images.shape[1]
         img_w = images.shape[2]
         n_plots = int(np.ceil(np.sqrt(images.shape[0])))
-        m = np.ones((images.shape[1] * n_plots + n_plots + 1,
-                     images.shape[2] * n_plots + n_plots + 1)) * 0.5
+        m = np.ones((images.shape[1] * n_plots + n_plots + 1, images.shape[2] * n_plots + n_plots + 1)) * 0.5
         for i in range(n_plots):
             for j in range(n_plots):
                 this_filter = i * n_plots + j
                 if this_filter < images.shape[0]:
                     this_img = images[this_filter]
-                    m[1 + i + i * img_h:1 + i + (i + 1) * img_h,
-                    1 + j + j * img_w:1 + j + (j + 1) * img_w] = this_img
+                    m[1 + i + i * img_h:1 + i + (i + 1) * img_h, 1 + j + j * img_w:1 + j + (j + 1) * img_w] = this_img
         return m
 
     def lrelu(self, x):
@@ -94,21 +79,14 @@ class DCGAN:
         with tf.variable_scope('disc', reuse=reuse):
             # Reshaping input
             x = tf.reshape(X, shape=[-1, self.img_length, self.img_length, 1])
-            for kernels, filtersz, stride, dropout, apply_batch_norm in d_sizes[
-                    'conv_layers']:
+            for kernels, filtersz, stride, dropout, apply_batch_norm in d_sizes['conv_layers']:
                 x = tf.layers.conv2d(
-                    x,
-                    kernel_size=kernels,
-                    filters=filtersz,
-                    strides=stride,
-                    padding='same',
-                    activation=activation)
+                    x, kernel_size=kernels, filters=filtersz, strides=stride, padding='same', activation=activation)
                 if dropout:
                     x = tf.layers.dropout(x, keep_prob)
 
                 if apply_batch_norm:
-                    x = tf.contrib.layers.batch_norm(
-                        x, is_training=self.is_training, decay=self.momentum)
+                    x = tf.contrib.layers.batch_norm(x, is_training=self.is_training, decay=self.momentum)
             for units in d_sizes['dense_layers']:
                 print('checking dense units ', units)
                 x = tf.layers.dense(x, units=units, activation=activation)
@@ -136,25 +114,17 @@ class DCGAN:
                 if dropout:
                     x = tf.layers.dropout(x, keep_prob)
                 if apply_batch_norm:
-                    x = tf.contrib.layers.batch_norm(
-                        x, is_training=is_training, decay=self.momentum)
+                    x = tf.contrib.layers.batch_norm(x, is_training=is_training, decay=self.momentum)
                 x = tf.reshape(x, shape=[-1, d1, d1, d2])
                 x = tf.image.resize_images(x, size=[7, 7])
                 # Conv layers
-            for kernels, filtersz, stride, dropout, apply_batch_norm in g_sizes[
-                    'conv_layers']:
+            for kernels, filtersz, stride, dropout, apply_batch_norm in g_sizes['conv_layers']:
                 x = tf.layers.conv2d_transpose(
-                    x,
-                    kernel_size=kernels,
-                    filters=filtersz,
-                    strides=stride,
-                    padding='same',
-                    activation=activation)
+                    x, kernel_size=kernels, filters=filtersz, strides=stride, padding='same', activation=activation)
                 if dropout:
                     x = tf.layers.dropout(x, keep_prob)
                 if apply_batch_norm:
-                    x = tf.contrib.layers.batch_norm(
-                        x, is_training=is_training, decay=self.momentum)
+                    x = tf.contrib.layers.batch_norm(x, is_training=is_training, decay=self.momentum)
             return x
 
     def fit(self, X, epochs=6000, batch_size=64):
@@ -164,21 +134,19 @@ class DCGAN:
             train_g = True
             keep_prob_train = 0.6
             # Creating noise
-            n = np.random.uniform(0.0, 1.0,
-                                  [batch_size, self.n_noise]).astype(
-                np.float32)
+            n = np.random.uniform(0.0, 1.0, [batch_size, self.n_noise]).astype(np.float32)
             for j in range(batch_size):
                 # Grabbing next batch
                 batch_X = X[j * batch_size:(j + 1) * batch_size]
                 batch_X = np.reshape(batch_X, newshape=[-1, 28, 28, 1])
                 d_real_ls, d_fake_ls, g_ls, d_ls = self.sess.run(
-                    [self.loss_d_real, self.loss_d_fake,
-                     self.loss_g, self.loss_d],
-                    feed_dict={self.real_images: batch_X,
-                               self.noise: n,
-                               self.keep_prob: keep_prob_train,
-                               self.is_training: True}
-                )
+                    [self.loss_d_real, self.loss_d_fake, self.loss_g, self.loss_d],
+                    feed_dict={
+                        self.real_images: batch_X,
+                        self.noise: n,
+                        self.keep_prob: keep_prob_train,
+                        self.is_training: True
+                    })
                 d_real_ls = np.mean(d_real_ls)
                 d_fake_ls = np.mean(d_fake_ls)
 
@@ -195,22 +163,29 @@ class DCGAN:
                 if train_d:
                     self.sess.run(
                         self.optimizer_d,
-                        feed_dict={self.noise: n,
-                                   self.real_images: batch_X,
-                                   self.keep_prob: keep_prob_train,
-                                   self.is_training: True})
+                        feed_dict={
+                            self.noise: n,
+                            self.real_images: batch_X,
+                            self.keep_prob: keep_prob_train,
+                            self.is_training: True
+                        })
                 if train_g:
                     self.sess.run(
                         self.optimizer_g,
-                        feed_dict={self.noise: n,
-                                   self.keep_prob: keep_prob_train,
-                                   self.is_training: True})
+                        feed_dict={
+                            self.noise: n,
+                            self.keep_prob: keep_prob_train,
+                            self.is_training: True
+                        })
                     # Showing sample image
                 if not i % 50:
                     print('Showing GEN montage at epoch ', i)
-                    gen_sample = self.sess.run(self.g,
-                        feed_dict={self.noise: n, self.keep_prob: 1.0,
-                                   self.is_training: False})
+                    gen_sample = self.sess.run(
+                        self.g, feed_dict={
+                            self.noise: n,
+                            self.keep_prob: 1.0,
+                            self.is_training: False
+                        })
                     imgs = [img[:, :, 0] for img in gen_sample]
                     m = self.montage(imgs)
                     gen_sample = m
@@ -238,41 +213,21 @@ def mnist():
     is_training = tf.placeholder(dtype=tf.bool, name='is_training')
 
     d_sizes = {
-        'conv_layers': [
-            [5, 64, 2, True, False],
-            [5, 64, 1, True, False],
-            [5, 64, 1, True, False]
-        ],
+        'conv_layers': [[5, 64, 2, True, False], [5, 64, 1, True, False], [5, 64, 1, True, False]],
         'dense_layers': [128]
     }
 
     d1 = 4
     d2 = 1
     g_sizes = {
-        'd1': d1,  # dim
-        'd2': d2,  # channels,
+        'd1': d1,    # dim
+        'd2': d2,    # channels,
         'n_noise': n_noise,
         'is_training': is_training,
-        'dense_layers': [
-            [d1 * d1 * d2, True, True]
-        ],
-        'conv_layers': [
-            [5, 64, 2, True, True],
-            [5, 64, 2, True, True],
-            [5, 64, 1, True, True],
-            [5, 1, 1, False, False]
-        ]
+        'dense_layers': [[d1 * d1 * d2, True, True]],
+        'conv_layers': [[5, 64, 2, True, True], [5, 64, 2, True, True], [5, 64, 1, True, True], [5, 1, 1, False, False]]
     }
 
-    dcgan = DCGAN(
-        img_dim,
-        num_colors,
-        d_sizes,
-        g_sizes,
-        keep_prob,
-        learning_rate,
-        n_noise
-    )
+    dcgan = DCGAN(img_dim, num_colors, d_sizes, g_sizes, keep_prob, learning_rate, n_noise)
     X = _mnist.train.images
     dcgan.fit(X, epochs=epochs, batch_size=batch_size)
-

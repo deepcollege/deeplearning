@@ -18,8 +18,7 @@ class DLProgress(tqdm):
 
 def downloadData(file, url):
     if not isfile(file):
-        with DLProgress(unit='B', unit_scale=True, miniters=1,
-                        desc='Fake News Dataset') as pbar:
+        with DLProgress(unit='B', unit_scale=True, miniters=1, desc='Fake News Dataset') as pbar:
             urlretrieve(url, file, pbar.hook)
 
     with zipfile.ZipFile(file) as f:
@@ -55,7 +54,8 @@ def show_graph(graph_def, max_const_size=32):
         <div style="height:600px">
           <tf-graph-basic id="{id}"></tf-graph-basic>
         </div>
-    """.format(data=repr(str(strip_def)), id='graph' + str(np.random.rand()))
+    """.format(
+        data=repr(str(strip_def)), id='graph' + str(np.random.rand()))
 
     iframe = """
         <iframe seamless style="width:1200px;height:620px;border:0" srcdoc="{}"></iframe>
