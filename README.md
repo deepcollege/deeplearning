@@ -128,3 +128,13 @@ path such as `C://Users/Desktop/code` into `/c/Users/Desktop/code`
    - for example: 000-Linear-Classification -> 001-Linear-Regression
 5. Reference existing code submissions from contributors or Wiki pages
 6. I will post Jupyter Notebooks with sample code or challenges to complete
+
+
+### Code Quality
+
+We follow PEP8 standard to maintain high code quality. To automate code formatting process
+it is recommended to use `yapf` before making any commits. 
+
+```bash
+$ yapf -i **/*.py
+```
