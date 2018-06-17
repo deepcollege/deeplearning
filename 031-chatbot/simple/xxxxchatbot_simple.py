@@ -1,3 +1,6 @@
+"""
+THIS FILE IS DEPRECATED
+"""
 import numpy as np
 import tensorflow as tf
 from .data import process_cornell
