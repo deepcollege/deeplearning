@@ -149,11 +149,11 @@ class Seq2Seq:
 
     def decode_test_set(self, encoder_state, decoder_cell, decoder_embeddings_matrix, sos_id, eos_id, maximum_length,
                         num_words, decoding_scope, output_function, keep_prob, batch_size):
-        '''
+        """
         we need decode_test_set to decode the encoded questions and answers of
         either the validation set or simply new predictions that are not used
          anyway in the training.
-        '''
+        """
         # TODO: Find out what exactly this part of the code does
         # Decoding the test/validation set
         attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])

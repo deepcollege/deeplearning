@@ -16,11 +16,11 @@ tokens = ['<PAD>', '<EOS>', '<OUT>', '<SOS>']
 
 
 def clean_text(text):
-    '''
+    """
     English helper to clean text
     :param text:
     :return:
-    '''
+    """
     text = text.lower()
     text = re.sub(r"i'm", 'i am', text)
     text = re.sub(r"he's", 'he is', text)
@@ -39,23 +39,23 @@ def clean_text(text):
 
 
 def convert_string2int(question, word2int):
-    '''
+    """
 	Converting the raw string question to an integer representation
 	:param question:
 	:param word2int:
 	:return:
-	'''
+	"""
     question = clean_text(question)
     return [word2int.get(word, word2int['<OUT>']) for word in question.split()]
 
 
 def convert_word_to_count(counter={}, doc=[]):
-    '''
+    """
     In-memory based simple word_to_count
     :param counter: Counter object to be returned
     :param doc: an entire document
     :return:
-    '''
+    """
     for sentence in doc:
         for word in sentence.split():
             if word not in counter:
@@ -66,12 +66,12 @@ def convert_word_to_count(counter={}, doc=[]):
 
 
 def save_file_data(name, obj):
-    '''
+    """
     Saving an object as a file using pickle
     :param name:
     :param obj:
     :return:
-    '''
+    """
     filename = './data/{}.pkl'.format(name)
     if not os.path.exists(os.path.dirname(filename)):
         try:
@@ -84,11 +84,11 @@ def save_file_data(name, obj):
 
 
 def read_file_data(name):
-    '''
+    """
     Reading
     :param name:
     :return:
-    '''
+    """
     filename = './data/{}.pkl'.format(name)
     with open(filename, 'rb') as input:
         return pickle.load(input)
@@ -129,10 +129,10 @@ class Cornell:
         self.validation_answers = self.sorted_clean_answers[:self.training_validation_split]
 
     def download_if_not_exist(self):
-        '''
+        """
 		Downloads required data file for cornell if it does not exists already
 		:return:
-		'''
+		"""
         for (fname, furl) in cornell_file_urls:
             # dir_path = os.path.dirname(os.path.realpath(__file__))
             input_folder = '/inputs/cornell'
@@ -150,9 +150,9 @@ class Cornell:
                     f.write(data)
 
     def _get_data(self):
-        '''
-		:return: raw questions and answers
-		'''
+        """
+				:return: raw questions and answers
+				"""
         print('Checking inputs cornell folder')
         print(os.listdir('/inputs/cornell'))
         lines = io.open('/inputs/cornell/movie_lines.txt', encoding='utf8', errors='ignore').read().split('\n')
@@ -160,9 +160,9 @@ class Cornell:
             '/inputs/cornell/movie_conversations.txt', encoding='utf8', errors='ignore').read().split('\n')
 
         id2line = {}
-        '''
-		Step 1: Creating a dict that maps each line to its id
-		'''
+        """
+				Step 1: Creating a dict that maps each line to its id
+				"""
 
         pprint('---- Step 1 creating a dict of id2lines ----')
         pprint('Original lines')
@@ -183,9 +183,9 @@ class Cornell:
             if len(_line) == 5:
                 pprint(id2line[_line[0]])
         print('\n\n')
-        '''
-      Step 2: Creating a list of all of the conversations
-      '''
+        """
+				Step 2: Creating a list of all of the conversations
+				"""
 
         conversations_ids = []
         pprint('----- Step 2 creating conversation ids ----')
@@ -201,9 +201,9 @@ class Cornell:
         pprint('processed')
         pprint(conversations_ids, stream=Head(10))
         print('\n\n')
-        '''
-      Step 3: Creates questions and answers sequence according to conversation_ids
-      '''
+        """
+				Step 3: Creates questions and answers sequence according to conversation_ids
+				"""
 
         questions = []
         answers = []
@@ -219,18 +219,18 @@ class Cornell:
         print('\nChecking answers sequences')
         pprint(answers, stream=Head(5))
         print('\n\n')
-        '''
-      Documents of questions and answers 1:1 mapped based on Cornell Movie Corpus Dialog
-      '''
+        """
+				Documents of questions and answers 1:1 mapped based on Cornell Movie Corpus Dialog
+				"""
         return questions, answers
 
     def _process_count_vectorization(self, lazy=True):
-        '''
+        """
         Process in-memory word2vec
         :param type:
         :param lazy:
         :return:
-        '''
+        """
         # Handle lazy load
         if lazy:
             try:
@@ -258,9 +258,9 @@ class Cornell:
 
         pprint(clean_questions, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 5: Clean the answers
-    	  '''
+    	  """
 
         pprint('---- Step 5 cleaning answers ----')
         clean_answers = []
@@ -269,9 +269,9 @@ class Cornell:
 
         pprint(clean_answers, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 6: Creating a dictionary that maps each word to its number of occurences
-    	  '''
+    	  """
 
         word2count = {}
         pprint('------ Step 6: counting words in questions ----')
@@ -280,20 +280,20 @@ class Cornell:
 
         pprint(word2count, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 7:
     	  For example, for a question: can we make this quick  roxanne korrine and andrew barrett are having an incredibly horrendous public break up on the quad  again
     	  It counts each word occurence such as "can" and accumulates the count into word2count dict
-    	  '''
+    	  """
         pprint('------ Step 6: counting words in answers ----')
 
         word2count = convert_word_to_count(word2count, clean_answers)
 
         pprint(word2count, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 8: Creating word 2 int(count) by filtering words that are greater than the threshold
-    	  '''
+    	  """
 
         pprint('------ Step 8: questions_words_2_int(count) filtered by threshold (>) ----')
         threshold_questions = 20
@@ -306,9 +306,9 @@ class Cornell:
 
         pprint(questions_words_2_counts, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 9: Same as step 8 but for answers
-    	  '''
+    	  """
         pprint('------ Step 9: answers_words_2_counts(count) filtered by threshold (>) ----')
         threshold_answers = 20
         answers_words_2_counts = {}
@@ -320,9 +320,9 @@ class Cornell:
 
         pprint(answers_words_2_counts, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 10: Adding the last tokens to these two dictionaries
-    	  '''
+    	  """
         pprint('------ Step 10: Adding token counts for questions_words_2_counts ----')
         for token in tokens:
             questions_words_2_counts[token] = len(questions_words_2_counts) + 1
@@ -336,9 +336,9 @@ class Cornell:
             pprint((token, ':', answers_words_2_counts[token]))
 
         print('\n\n')
-        '''
+        """
     	  Step 12: Creating an inverse dictionary of the word:count to count:word
-    	  '''
+    	  """
         pprint('------ Step 12: Creating an inverse dictionary of the word:count to count:word ----')
 
         answers_counts_2_words = {c: w for w, c, in answers_words_2_counts.items()}
@@ -354,10 +354,10 @@ class Cornell:
 
         pprint(clean_answers, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 13: Translating all the questions and answers into counts
     	  and replacing all the words that were filtered out by OUT
-    	  '''
+    	  """
         pprint('Step 13: Translating all the questions into counts; replacing unknown words with OUT token')
 
         questions_to_counts = []
@@ -372,9 +372,9 @@ class Cornell:
 
         pprint(questions_to_counts, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  Step 14: Same as step 13 except for it's targeting answers
-    	  '''
+    	  """
         pprint('Step 14: Translating all the answers into counts; replacing unknown words with OUT token')
 
         answers_to_counts = []
@@ -389,10 +389,10 @@ class Cornell:
 
         pprint(answers_to_counts, stream=Head(5))
         print('\n\n')
-        '''
+        """
         Step 15: Sorting questions and answers by the length of questions
     	  tip: look at CounterVectorizer
-    	  '''
+    	  """
         pprint('Step 15: Sorting questions and answers counts')
 
         sorted_clean_questions = []
@@ -411,11 +411,11 @@ class Cornell:
         print('')
         pprint(sorted_clean_answers, stream=Head(5))
         print('\n\n')
-        '''
+        """
     	  1. sorted_clean_questions: list of processed questions
     	  2. sorted_clean_answers: list of processed answers
     	  3. answers_counts_2_words: list of ints lookup word table
-    	  '''
+    	  """
 
         # Saving
         if lazy:
@@ -427,19 +427,19 @@ class Cornell:
         return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
 
     def _apply_padding(self, batch_of_sequences, word2int):
-        '''
+        """
         Padding the sequence with the <PAD> token
         :param batch_of_sequences:
         :param word2int:
         :return: ['something', '<PAD>', '<PAD>', '<PAD>', '<PAD>', '<PAD>'] <- depends on max_sequence_length
-        '''
+        """
         max_sequence_length = max([len(sequence) for sequence in batch_of_sequences])
         return [
             sequence + [word2int['<PAD>']] * (max_sequence_length - len(sequence)) for sequence in batch_of_sequences
         ]
 
     def _get_next_batch(self, batch_index, batch_size, questions, answers):
-        '''
+        """
 		Getting padded questions and answers of batch index and size
 		This method is only used internally.
 		:param batch_index:
@@ -447,7 +447,7 @@ class Cornell:
 		:param questions:
 		:param answers:
 		:return:
-		'''
+		"""
         start_index = batch_index * batch_size
         questions_in_batch = questions[start_index:start_index + batch_size]
         answers_in_batch = answers[start_index:start_index + batch_size]
@@ -456,14 +456,14 @@ class Cornell:
         return padded_questions_in_batch, padded_answers_in_batch
 
     def get_next_batch(self, batch_index, batch_size):
-        '''
+        """
 		start_index = batch_index * batch_size
 		questions_in_batch = self.training_questions[start_index:start_index + batch_size]
 		answers_in_batch = self.training_answers[start_index:start_index + batch_size]
 		padded_questions_in_batch = np.array(self._apply_padding(questions_in_batch, self.questions_words_2_counts))
 		padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
 		return padded_questions_in_batch, padded_answers_in_batch
-		'''
+		"""
         return self._get_next_batch(
             batch_index=batch_index,
             batch_size=batch_size,
