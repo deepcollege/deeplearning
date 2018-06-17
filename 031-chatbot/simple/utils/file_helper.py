@@ -11,5 +11,5 @@ def file_exists(path):
 
 
 def try_create_dir(directory):
-  if not os.path.exists(directory):
-    os.makedirs(directory)
+    if not os.path.exists(directory):
+        os.makedirs(directory)

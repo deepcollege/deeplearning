@@ -14,7 +14,7 @@ class Head(object):
             return self.fd.write(msg)
         ix = 0
 
-        while(self.lines > 0):
+        while (self.lines > 0):
             iy = msg.find('\n', ix + 1)
             self.lines -= 1
             ix = iy
