@@ -4,8 +4,8 @@ import re
 import pickle
 import errno
 from .utils.file_helper import file_exists, try_create_dir
-from urllib.request import urlopen
-# from urllib2 import urlopen
+# from urllib.request import urlopen
+from urllib2 import urlopen
 import numpy as np
 from pprint import pprint
 
@@ -115,6 +115,14 @@ class Cornell:
     validation_questions = None
     validation_answers = None
 
+    # System
+    input_dir = '/inputs'
+    output_dir = '/output'
+
+    def __init__(self, input_dir, output_dir):
+        self.input_dir = input_dir
+        self.output_dir = output_dir
+
     def load(self):
         (self.sorted_clean_questions, self.sorted_clean_answers, self.questions_words_2_counts,
          self.answers_words_2_counts, self.answers_counts_2_words) = self._process_count_vectorization()
@@ -135,7 +143,7 @@ class Cornell:
 		"""
         for (fname, furl) in cornell_file_urls:
             # dir_path = os.path.dirname(os.path.realpath(__file__))
-            input_folder = '/inputs/cornell'
+            input_folder = '{input_dir}/cornell'.format(input_dir=self.input_dir)
             full_dirname = input_folder
             full_fname = '/'.join([full_dirname, fname])
             if not file_exists(full_fname):
@@ -154,10 +162,12 @@ class Cornell:
 				:return: raw questions and answers
 				"""
         print('Checking inputs cornell folder')
-        print(os.listdir('/inputs/cornell'))
-        lines = io.open('/inputs/cornell/movie_lines.txt', encoding='utf8', errors='ignore').read().split('\n')
+        print(os.listdir('{input_dir}/cornell'.format(input_dir=self.input_dir)))
+        movie_line_path = '{input_dir}/cornell/movie_lines.txt'.format(input_dir=self.input_dir)
+        lines = io.open(movie_line_path, encoding='utf8', errors='ignore').read().split('\n')
+        conversation_path = '{input_dir}/cornell/movie_conversations.txt'.format(input_dir=self.input_dir)
         conversations = io.open(
-            '/inputs/cornell/movie_conversations.txt', encoding='utf8', errors='ignore').read().split('\n')
+            conversation_path, encoding='utf8', errors='ignore').read().split('\n')
 
         id2line = {}
         """
@@ -484,10 +494,19 @@ class Cornell:
 class Dataset:
     sub = None    # Dataset object
     type = 'cornell'
+    output_dir = '/output'
+    inputs_dir = '/inputs'
+
+    def __init__(self, FLAGS):
+        self.output_dir = FLAGS.output
+        self.inputs_dir = FLAGS.input
 
     def load(self):
         if self.type == 'cornell':
-            self.sub = Cornell()
+            self.sub = Cornell(
+                input_dir=self.inputs_dir,
+                output_dir=self.output_dir
+            )
 
         if self.sub:
             self.sub.download_if_not_exist()

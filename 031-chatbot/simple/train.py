@@ -1,5 +1,6 @@
 import time
 import random
+import argparse
 from .data import Dataset
 from .model import Seq2Seq
 
@@ -16,13 +17,38 @@ def sample_reply(model, ds):
     print('Question: {question}\n' 'Answer: {answer}'.format(question=sample_question, answer=sample_answer))
 
 
+def add_arguments(parser):
+    """Build ArgumentParser."""
+    parser.register("type", "bool", lambda v: v.lower() == "true")
+
+    # Output location
+    parser.add_argument("--output", type=str, default="/output", help="""\
+          example drive/chatbot/output | /output
+          Use drive if you are running on Colab
+          Use /output if you are running on Floydhub\
+          """)
+
+    # Input location
+    parser.add_argument("--input", type=str, default="/inputs", help="""\
+          example drive/chatbot/input | /inputs
+          Use drive if you are running on Colab
+          Use /inputs if you are running on Floydhub\
+          """)
+
 def main():
+    seq2seq_parser = argparse.ArgumentParser()
+    add_arguments(seq2seq_parser)
+    FLAGS, _ = seq2seq_parser.parse_known_args()
+
+    print('Initaiting the training with the following FLAGS')
+    print(FLAGS.output)
+
     # Dataset, default should be using Cornell
-    ds = Dataset()
+    ds = Dataset(FLAGS)
     ds.load()
 
     # Model savepoint
-    checkpoint = '/output/chatbot_weights.ckpt'
+    checkpoint = '{output_dir}/chatbot_weights.ckpt'.format(output_dir=FLAGS.output)
 
     # Hyperparams
     batch_size = 64

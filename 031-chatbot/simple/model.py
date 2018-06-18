@@ -20,11 +20,16 @@ class Seq2Seq:
     # inference
     test_predictions = None
 
+    # System
+    output_dir = '/output'
+
     def __init__(
             self,
             model_hparams,
+            FLAGS
     ):
         self.model_hparams = model_hparams
+        self.output_dir = FLAGS.output
 
     def compile(self, mode='training'):
         # Initiating session
@@ -288,7 +293,8 @@ class Seq2Seq:
 
     def _build_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-        tf.summary.FileWriter('/output/chatbot-tfboard/2', self.session.graph)
+        tf.summary.FileWriter(
+            '{output_dir}/chatbot-tfboard/2'.format(output_dir=self.output_dir), self.session.graph)
 
     def _create_session(self):
         """Initialize the TensorFlow session"""
