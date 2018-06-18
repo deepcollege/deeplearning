@@ -4,8 +4,8 @@ import re
 import pickle
 import errno
 from .utils.file_helper import file_exists, try_create_dir
-# from urllib.request import urlopen
-from urllib2 import urlopen
+from urllib.request import urlopen
+# from urllib2 import urlopen
 import numpy as np
 from pprint import pprint
 
