@@ -51,11 +51,11 @@ def main():
     checkpoint = '{output_dir}/chatbot_weights.ckpt'.format(output_dir=FLAGS.output)
 
     # Hyperparams
-    batch_size = 64
+    batch_size = 128
     epochs = 100
-    learning_rate = 0.01
-    learning_rate_decay = 0.9
-    min_learning_rate = 0.0001
+    learning_rate = 2.0
+    learning_rate_decay = 0.99
+    min_learning_rate = 0.1
     batch_index_check_training_loss = 100
     batch_index_check_validation_loss = (ds.sub.num_questions_word2count // batch_size // 2) - 1
     total_training_loss_error = 0
@@ -66,10 +66,10 @@ def main():
     # Actual hyperparameters
         'batch_size': batch_size,
         'sequence_length': 25,
-        'encoding_embedding_size': 512,
-        'decoding_embedding_size': 512,
-        'rnn_size': 512,
-        'num_layers': 3,
+        'encoding_embedding_size': 256,
+        'decoding_embedding_size': 256,
+        'rnn_size': 256,
+        'num_layers': 2,
         'gpu_dynamic_memory_growth': False,
         'keep_probability': 0.5,
         'learning_rate': learning_rate,
