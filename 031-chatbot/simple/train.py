@@ -81,7 +81,7 @@ def main():
     })
 
     # Compiling model
-    model = Seq2Seq(model_hparams=model_hparams)
+    model = Seq2Seq(model_hparams=model_hparams, FLAGS=FLAGS)
     model.compile()
 
     for epoch in range(1, epochs + 1):
