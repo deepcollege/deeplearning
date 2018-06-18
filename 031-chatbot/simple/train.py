@@ -148,6 +148,9 @@ def main():
                     model.save_model(checkpoint)
                 else:
                     print('Sorry I do not speak better, I need to practice more')
+
+                    # Sampling
+                    sample_reply(model, ds)
                     early_stopping_check += 1
                     if early_stopping_check == early_stopping_stop:
                         break
