@@ -41,7 +41,7 @@ def main():
     FLAGS, _ = seq2seq_parser.parse_known_args()
 
     print('Initaiting the training with the following FLAGS')
-    print(FLAGS.output)
+    print(FLAGS)
 
     # Dataset, default should be using Cornell
     ds = Dataset(FLAGS)
