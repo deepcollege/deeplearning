@@ -332,9 +332,24 @@ class Dataset:
         self.output_dir = FLAGS.output
         self.inputs_dir = FLAGS.input
 
-    def load_as_files(self):
+    def load_as_files(self, lazy=True):
         """ Parent load as files class used globally """
-        questions, answers, questions_vocabs, answers_vocabs = self.sub.load_as_raw()
+        # Handle lazy load
+        if lazy:
+            try:
+                questions = read_file_data('questions', self.inputs_dir)
+                answers = read_file_data('answers', self.inputs_dir)
+                questions_vocabs = read_file_data('questions_vocabs', self.inputs_dir)
+                answers_vocabs = read_file_data('answers_vocabs', self.inputs_dir)
+            except Exception as e:
+                print('Failed to lazy load !', e)
+                questions, answers, questions_vocabs, answers_vocabs = self.sub.load_as_raw()
+                save_file_data('questions', questions)
+                save_file_data('answers', answers)
+                save_file_data('questions_vocabs', questions_vocabs)
+                save_file_data('answers_vocabs', answers_vocabs)
+        else:
+            questions, answers, questions_vocabs, answers_vocabs = self.sub.load_as_raw()
 
         # It will always use vi as src en as output
         save_list_to_file(questions, '{}/train.vi'.format(self.inputs_dir))
