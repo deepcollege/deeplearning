@@ -5,8 +5,8 @@ import pickle
 import errno
 import argparse
 from .utils.file_helper import file_exists, try_create_dir
-# from urllib.request import urlopen
-from urllib2 import urlopen
+from urllib.request import urlopen
+# from urllib2 import urlopen
 from pprint import pprint
 from sklearn.model_selection import train_test_split
 

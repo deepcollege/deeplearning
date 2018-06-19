@@ -8,7 +8,7 @@ train_advanced_floyd:
 		--vocab_prefix=/inputs/vocab  \
 		--train_prefix=/inputs/train \
 		--dev_prefix=/inputs/dev  \
-		--test_prefix=/inputs/tst2013 \
+		--test_prefix=/inputs/test \
 		--out_dir=/output/nmt_model \
 		--num_train_steps=12000 \
 		--steps_per_stats=100 \
