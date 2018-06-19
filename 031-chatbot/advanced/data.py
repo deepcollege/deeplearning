@@ -142,21 +142,83 @@ class Cornell:
         # Q & A
         questions, answers = self.get_questions_answers()
 
-        return  questions, answers
+        # Get vocabs
 
-    def load_vectorised(self):
-        """ Load the dataset as counter vectorised form """
-        (self.sorted_clean_questions, self.sorted_clean_answers, self.questions_words_2_counts,
-         self.answers_words_2_counts, self.answers_counts_2_words) = self._process_count_vectorization()
-        self.num_questions_word2count = len(self.questions_words_2_counts)
-        self.num_answers_word2count = len(self.answers_words_2_counts)
+        # Step 4: cleaning the questions
+        pprint('---- Step 4 cleaning questions ----')
 
-        # Train test split
-        self.training_validation_split = int(len(self.sorted_clean_questions) * 0.15)
-        self.training_questions = self.sorted_clean_questions[self.training_validation_split:]
-        self.training_answers = self.sorted_clean_answers[self.training_validation_split:]
-        self.validation_questions = self.sorted_clean_questions[:self.training_validation_split]
-        self.validation_answers = self.sorted_clean_answers[:self.training_validation_split]
+        clean_questions = []
+        for question in questions:
+            clean_questions.append(clean_text(question))
+
+        pprint(clean_questions, stream=Head(5))
+        print('\n\n')
+        """
+        Step 5: Clean the answers
+        """
+
+        pprint('---- Step 5 cleaning answers ----')
+        clean_answers = []
+        for answer in answers:
+            clean_answers.append(clean_text(answer))
+
+        pprint(clean_answers, stream=Head(5))
+        print('\n\n')
+        """
+        Step 6: Creating a dictionary that maps each word to its number of occurences
+        """
+
+        word2count = {}
+        pprint('------ Step 6: counting words in questions ----')
+
+        word2count = convert_word_to_count(word2count, clean_questions)
+
+        pprint(word2count, stream=Head(5))
+        print('\n\n')
+        """
+        Step 7:
+        For example, for a question: can we make this quick  roxanne korrine and andrew barrett are having an incredibly horrendous public break up on the quad  again
+        It counts each word occurence such as "can" and accumulates the count into word2count dict
+        """
+        pprint('------ Step 6: counting words in answers ----')
+
+        word2count = convert_word_to_count(word2count, clean_answers)
+
+        pprint(word2count, stream=Head(5))
+        print('\n\n')
+
+        keys = ['<unk>', '<s>', '</s>']
+
+        """
+        Step 8: Creating word 2 int(count) by filtering words that are greater than the threshold
+        """
+
+        pprint(
+            '------ Step 8: questions_vocabs filtered by threshold (>) ----')
+        threshold_questions = 20
+        questions_vocabs = [] + keys
+        for word, count in word2count.items():
+            if count >= threshold_questions:
+                if not word in questions_vocabs:
+                    questions_vocabs.append(word)
+
+        pprint(questions_vocabs, stream=Head(5))
+        print('\n\n')
+        """
+        Step 9: Same as step 8 but for answers
+        """
+        pprint(
+            '------ Step 9: answers_vocabs filtered by threshold (>) ----')
+        threshold_answers = 20
+        answers_vocabs = [] + keys
+        for word, count in word2count.items():
+            if count >= threshold_answers:
+                if not word in answers_vocabs:
+                    answers_vocabs.append(word)
+
+        pprint(answers_vocabs, stream=Head(5))
+
+        return  questions, answers, questions_vocabs, answers_vocabs
 
     def download_if_not_exist(self):
         """
@@ -256,259 +318,6 @@ class Cornell:
 				"""
         return questions, answers
 
-    def _process_count_vectorization(self, lazy=True):
-        """
-        Process in-memory word2vec
-        :param type:
-        :param lazy:
-        :return:
-        """
-        # Handle lazy load
-        if lazy:
-            try:
-                sorted_clean_questions = read_file_data('sorted_clean_questions')
-                sorted_clean_answers = read_file_data('sorted_clean_answers')
-                questions_words_2_counts = read_file_data('questions_words_2_counts')
-                answers_words_2_counts = read_file_data('answers_words_2_counts')
-                answers_counts_2_words = read_file_data('answers_counts_2_words')
-                return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
-            except Exception as e:
-                print('Lazy load failed:', e)
-                pass
-
-        questions = []
-        answers = []
-
-        questions, answers = self.get_questions_answers()
-
-        # Step 4: cleaning the questions
-        pprint('---- Step 4 cleaning questions ----')
-
-        clean_questions = []
-        for question in questions:
-            clean_questions.append(clean_text(question))
-
-        pprint(clean_questions, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 5: Clean the answers
-    	  """
-
-        pprint('---- Step 5 cleaning answers ----')
-        clean_answers = []
-        for answer in answers:
-            clean_answers.append(clean_text(answer))
-
-        pprint(clean_answers, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 6: Creating a dictionary that maps each word to its number of occurences
-    	  """
-
-        word2count = {}
-        pprint('------ Step 6: counting words in questions ----')
-
-        word2count = convert_word_to_count(word2count, clean_questions)
-
-        pprint(word2count, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 7:
-    	  For example, for a question: can we make this quick  roxanne korrine and andrew barrett are having an incredibly horrendous public break up on the quad  again
-    	  It counts each word occurence such as "can" and accumulates the count into word2count dict
-    	  """
-        pprint('------ Step 6: counting words in answers ----')
-
-        word2count = convert_word_to_count(word2count, clean_answers)
-
-        pprint(word2count, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 8: Creating word 2 int(count) by filtering words that are greater than the threshold
-    	  """
-
-        pprint('------ Step 8: questions_words_2_int(count) filtered by threshold (>) ----')
-        threshold_questions = 20
-        questions_words_2_counts = {}
-        word_number = 0
-        for word, count in word2count.items():
-            if count >= threshold_questions:
-                questions_words_2_counts[word] = word_number
-                word_number += 1
-
-        pprint(questions_words_2_counts, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 9: Same as step 8 but for answers
-    	  """
-        pprint('------ Step 9: answers_words_2_counts(count) filtered by threshold (>) ----')
-        threshold_answers = 20
-        answers_words_2_counts = {}
-        word_number = 0
-        for word, count in word2count.items():
-            if count >= threshold_answers:
-                answers_words_2_counts[word] = word_number
-                word_number += 1
-
-        pprint(answers_words_2_counts, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 10: Adding the last tokens to these two dictionaries
-    	  """
-        pprint('------ Step 10: Adding token counts for questions_words_2_counts ----')
-        for token in tokens:
-            questions_words_2_counts[token] = len(questions_words_2_counts) + 1
-            pprint((token, ':', questions_words_2_counts[token]))
-
-        print('\n\n')
-
-        pprint('------ Step 11: Adding token counts for answers_words_2_counts ----')
-        for token in tokens:
-            answers_words_2_counts[token] = len(answers_words_2_counts) + 1
-            pprint((token, ':', answers_words_2_counts[token]))
-
-        print('\n\n')
-        """
-    	  Step 12: Creating an inverse dictionary of the word:count to count:word
-    	  """
-        pprint('------ Step 12: Creating an inverse dictionary of the word:count to count:word ----')
-
-        answers_counts_2_words = {c: w for w, c, in answers_words_2_counts.items()}
-
-        pprint(answers_counts_2_words, stream=Head(5))
-        print('\n\n')
-
-        # TODO: Check the Seq2Seq diagram to understand this
-        pprint('------ Step 13: Adding the EOS to every answer ----')
-
-        for i in range(len(clean_answers)):
-            clean_answers[i] += ' <EOS>'
-
-        pprint(clean_answers, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 13: Translating all the questions and answers into counts
-    	  and replacing all the words that were filtered out by OUT
-    	  """
-        pprint('Step 13: Translating all the questions into counts; replacing unknown words with OUT token')
-
-        questions_to_counts = []
-        for question in clean_questions:
-            counts = []
-            for word in question.split():
-                if word not in questions_words_2_counts:
-                    counts.append(questions_words_2_counts['<OUT>'])
-                else:
-                    counts.append(questions_words_2_counts[word])
-            questions_to_counts.append(counts)
-
-        pprint(questions_to_counts, stream=Head(5))
-        print('\n\n')
-        """
-    	  Step 14: Same as step 13 except for it's targeting answers
-    	  """
-        pprint('Step 14: Translating all the answers into counts; replacing unknown words with OUT token')
-
-        answers_to_counts = []
-        for answer in clean_answers:
-            counts = []
-            for word in answer.split():
-                if word not in answers_words_2_counts:
-                    counts.append(answers_words_2_counts['<OUT>'])
-                else:
-                    counts.append(answers_words_2_counts[word])
-            answers_to_counts.append(counts)
-
-        pprint(answers_to_counts, stream=Head(5))
-        print('\n\n')
-        """
-        Step 15: Sorting questions and answers by the length of questions
-    	  tip: look at CounterVectorizer
-    	  """
-        pprint('Step 15: Sorting questions and answers counts')
-
-        sorted_clean_questions = []
-        sorted_clean_answers = []
-        for length in range(1, 25 + 1):
-            for i in enumerate(questions_to_counts):
-                if len(i[1]) == length:
-                    sorted_clean_questions.append(questions_to_counts[i[0]])
-                    sorted_clean_answers.append(answers_to_counts[i[0]])
-
-        pprint('sorted_clean_questions')
-        print('')
-        pprint(sorted_clean_questions, stream=Head(5))
-        print('\n')
-        pprint('sorted_clean_answers')
-        print('')
-        pprint(sorted_clean_answers, stream=Head(5))
-        print('\n\n')
-        """
-    	  1. sorted_clean_questions: list of processed questions
-    	  2. sorted_clean_answers: list of processed answers
-    	  3. answers_counts_2_words: list of ints lookup word table
-    	  """
-
-        # Saving
-        if lazy:
-            save_file_data('sorted_clean_questions', sorted_clean_questions)
-            save_file_data('sorted_clean_answers', sorted_clean_answers)
-            save_file_data('questions_words_2_counts', questions_words_2_counts)
-            save_file_data('answers_words_2_counts', answers_words_2_counts)
-            save_file_data('answers_counts_2_words', answers_counts_2_words)
-        return sorted_clean_questions, sorted_clean_answers, questions_words_2_counts, answers_words_2_counts, answers_counts_2_words
-
-    def _apply_padding(self, batch_of_sequences, word2int):
-        """
-        Padding the sequence with the <PAD> token
-        :param batch_of_sequences:
-        :param word2int:
-        :return: ['something', '<PAD>', '<PAD>', '<PAD>', '<PAD>', '<PAD>'] <- depends on max_sequence_length
-        """
-        max_sequence_length = max([len(sequence) for sequence in batch_of_sequences])
-        return [
-            sequence + [word2int['<PAD>']] * (max_sequence_length - len(sequence)) for sequence in batch_of_sequences
-        ]
-
-    def _get_next_batch(self, batch_index, batch_size, questions, answers):
-        """
-		Getting padded questions and answers of batch index and size
-		This method is only used internally.
-		:param batch_index:
-		:param batch_size:
-		:param questions:
-		:param answers:
-		:return:
-		"""
-        start_index = batch_index * batch_size
-        questions_in_batch = questions[start_index:start_index + batch_size]
-        answers_in_batch = answers[start_index:start_index + batch_size]
-        padded_questions_in_batch = np.array(self._apply_padding(questions_in_batch, self.questions_words_2_counts))
-        padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
-        return padded_questions_in_batch, padded_answers_in_batch
-
-    def get_next_batch(self, batch_index, batch_size):
-        """
-		start_index = batch_index * batch_size
-		questions_in_batch = self.training_questions[start_index:start_index + batch_size]
-		answers_in_batch = self.training_answers[start_index:start_index + batch_size]
-		padded_questions_in_batch = np.array(self._apply_padding(questions_in_batch, self.questions_words_2_counts))
-		padded_answers_in_batch = np.array(self._apply_padding(answers_in_batch, self.answers_words_2_counts))
-		return padded_questions_in_batch, padded_answers_in_batch
-		"""
-        return self._get_next_batch(
-            batch_index=batch_index,
-            batch_size=batch_size,
-            questions=self.training_questions,
-            answers=self.training_answers)
-
-    def get_next_valid_batch(self, batch_index, batch_size):
-        return self._get_next_batch(
-            batch_index=batch_index,
-            batch_size=batch_size,
-            questions=self.validation_questions,
-            answers=self.validation_answers)
-
     def get_word2int(self, word):
         return self.questions_words_2_counts[word]
 
@@ -518,19 +327,20 @@ class Dataset:
     type = 'cornell'
     output_dir = '/output'
     inputs_dir = '/inputs'
-    load_type = 'file'
 
     def __init__(self, FLAGS):
         self.output_dir = FLAGS.output
         self.inputs_dir = FLAGS.input
-        self.load_type = FLAGS.load_type
 
     def load_as_files(self):
         """ Parent load as files class used globally """
-        questions, answers = self.sub.load_as_raw()
-        save_list_to_file(questions, '/tmp/train.en')
-        save_list_to_file(answers, '/tmp/train.vi')
-        print(questions[-10], answers[-10])
+        questions, answers, questions_vocabs, answers_vocabs = self.sub.load_as_raw()
+
+        # It will always use vi as src en as output
+        save_list_to_file(questions, '{}/train.vi'.format(self.inputs_dir))
+        save_list_to_file(answers, '{}/train.en'.format(self.inputs_dir))
+        save_list_to_file(questions_vocabs, '{}/vocab.vi'.format(self.inputs_dir))
+        save_list_to_file(answers_vocabs, '{}/vocab.en'.format(self.inputs_dir))
 
     def load(self):
         if self.type == 'cornell':
@@ -542,30 +352,16 @@ class Dataset:
         if self.sub:
             self.sub.download_if_not_exist()
 
-            # Diffrent loading depending on the type
-            if self.load_type == 'file':
-                self.load_as_files()
-            else:
-                self.sub.load_vectorised()
+            # Always load the data as file
+            self.load_as_files()
         else:
             raise Exception('Invalid dataset!')
-
-    def get_batches(self, batch_size):
-        # training_questions = self.sub.sorted_clean_questions[self.sub.training_validation_split:]
-        for batch_index in range(0, len(self.sub.training_questions) // batch_size):
-            yield self.sub.get_next_batch(batch_index, batch_size)
-
-    def get_validation_batches(self, batch_size):
-        # validation_questions = self.sub.sorted_clean_questions[:self.sub.training_validation_split]
-        for batch_index in range(0, len(self.sub.validation_questions) // batch_size):
-            yield self.sub.get_next_valid_batch(batch_index, batch_size)
 
 
 def main():
     class FLAGS:
         output = '/output'
         input = '/inputs'
-        load_type = 'file'
 
     ds = Dataset(FLAGS=FLAGS)
     ds.load()
