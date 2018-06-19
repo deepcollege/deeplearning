@@ -3,10 +3,10 @@ import io
 import re
 import pickle
 import errno
+import argparse
 from .utils.file_helper import file_exists, try_create_dir
 # from urllib.request import urlopen
 from urllib2 import urlopen
-import numpy as np
 from pprint import pprint
 from sklearn.model_selection import train_test_split
 
@@ -66,7 +66,7 @@ def convert_word_to_count(counter={}, doc=[]):
     return counter
 
 
-def save_file_data(name, obj, input_path='/input'):
+def save_file_data(name, obj, input_path='/inputs'):
     """
     Saving an object as a file using pickle
     :param name:
@@ -84,7 +84,7 @@ def save_file_data(name, obj, input_path='/input'):
         pickle.dump(obj, output)
 
 
-def read_file_data(name, input_path='/input'):
+def read_file_data(name, input_path='/inputs'):
     """
     Reading
     :param name:
@@ -345,10 +345,10 @@ class Dataset:
             except Exception as e:
                 print('Failed to lazy load !', e)
                 questions, answers, questions_vocabs, answers_vocabs = self.sub.load_as_raw()
-                save_file_data('questions', questions)
-                save_file_data('answers', answers)
-                save_file_data('questions_vocabs', questions_vocabs)
-                save_file_data('answers_vocabs', answers_vocabs)
+                save_file_data('questions', questions, self.inputs_dir)
+                save_file_data('answers', answers, self.inputs_dir)
+                save_file_data('questions_vocabs', questions_vocabs, self.inputs_dir)
+                save_file_data('answers_vocabs', answers_vocabs, self.inputs_dir)
         else:
             questions, answers, questions_vocabs, answers_vocabs = self.sub.load_as_raw()
 
@@ -388,21 +388,32 @@ class Dataset:
             raise Exception('Invalid dataset!')
 
 
+def add_arguments(parser):
+    """Build ArgumentParser."""
+    parser.register("type", "bool", lambda v: v.lower() == "true")
+
+    # Output location
+    parser.add_argument("--output", type=str, default="/output", help="""\
+          example drive/chatbot/output | /output
+          Use drive if you are running on Colab
+          Use /output if you are running on Floydhub\
+          """)
+
+    # Input location
+    parser.add_argument("--input", type=str, default="/inputs", help="""\
+          example drive/chatbot/input | /inputs
+          Use drive if you are running on Colab
+          Use /inputs if you are running on Floydhub\
+          """)
+
+
 def main():
-    class FLAGS:
-        output = '/output'
-        input = '/inputs'
+    seq2seq_parser = argparse.ArgumentParser()
+    add_arguments(seq2seq_parser)
+    FLAGS, _ = seq2seq_parser.parse_known_args()
 
     ds = Dataset(FLAGS=FLAGS)
     ds.load()
-
-    '''
-    for index, val in enumerate(ds.get_batches(25)):
-        print('training: index', index, 'val', val)
-
-    for index, val in enumerate(ds.get_validation_batches(25)):
-        print('valid: index', index, 'val', val)
-    '''
 
 if __name__ == "__main__":
     main()
