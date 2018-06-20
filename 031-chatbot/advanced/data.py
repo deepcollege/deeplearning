@@ -5,8 +5,8 @@ import pickle
 import errno
 import argparse
 from .utils.file_helper import file_exists, try_create_dir
-from urllib.request import urlopen
-# from urllib2 import urlopen
+# from urllib.request import urlopen
+from urllib2 import urlopen
 from pprint import pprint
 from sklearn.model_selection import train_test_split
 
@@ -357,20 +357,20 @@ class Dataset:
         X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
 
         # Train
-        save_list_to_file(X_train, '{}/train.vi'.format(self.inputs_dir))
-        save_list_to_file(y_train, '{}/train.en'.format(self.inputs_dir))
+        save_list_to_file(X_train, '{}/train.from'.format(self.inputs_dir))
+        save_list_to_file(y_train, '{}/train.to'.format(self.inputs_dir))
 
         # Valid
-        save_list_to_file(X_valid, '{}/dev.vi'.format(self.inputs_dir))
-        save_list_to_file(y_valid, '{}/dev.en'.format(self.inputs_dir))
+        save_list_to_file(X_valid, '{}/dev.from'.format(self.inputs_dir))
+        save_list_to_file(y_valid, '{}/dev.to'.format(self.inputs_dir))
 
         # Test
-        save_list_to_file(X_test, '{}/test.vi'.format(self.inputs_dir))
-        save_list_to_file(y_test, '{}/test.en'.format(self.inputs_dir))
+        save_list_to_file(X_test, '{}/test.from'.format(self.inputs_dir))
+        save_list_to_file(y_test, '{}/test.to'.format(self.inputs_dir))
 
         # vocab
-        save_list_to_file(questions_vocabs, '{}/vocab.vi'.format(self.inputs_dir))
-        save_list_to_file(answers_vocabs, '{}/vocab.en'.format(self.inputs_dir))
+        save_list_to_file(questions_vocabs, '{}/vocab.from'.format(self.inputs_dir))
+        save_list_to_file(answers_vocabs, '{}/vocab.to'.format(self.inputs_dir))
 
     def load(self):
         if self.type == 'cornell':
