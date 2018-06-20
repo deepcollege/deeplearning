@@ -26,10 +26,12 @@ class Seq2Seq:
     def __init__(
             self,
             model_hparams,
-            FLAGS
+            FLAGS,
+            session=None,
     ):
         self.model_hparams = model_hparams
         self.output_dir = FLAGS.output
+        self.session = session
 
     def compile(self, mode='training'):
         # Initiating session
