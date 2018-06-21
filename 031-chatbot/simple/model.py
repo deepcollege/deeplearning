@@ -65,8 +65,6 @@ class Seq2Seq:
         # TODO: Refactor
         self.session.run(tf.global_variables_initializer())
 
-        tf.summary.scalar("sequence_loss", self.loss_error)
-        tf.summary.scalar("learning_rate", self.lr)
         self._build_tensorboard()
 
     def model_inputs(self):
@@ -222,7 +220,7 @@ class Seq2Seq:
         return optimizer_gradient_clipping, loss_error, test_predictions
 
     def train_batch(self, inputs, targets, learning_rate):
-        batch_training_accuracy, batch_training_loss_error = self.session.run(
+        _, batch_training_loss_error = self.session.run(
             [self.optimizer_gradient_clipping, self.loss_error], {
                 self.inputs: inputs,
                 self.targets: targets,
@@ -230,7 +228,7 @@ class Seq2Seq:
                 self.sequence_length: targets.shape[1],
                 self.keep_prob: self.model_hparams['keep_probability']
             })
-        print('checking accuracy', batch_training_accuracy)
+        batch_training_loss_error = tf.summary.scalar("batch_training_loss_error", batch_training_loss_error)
         return batch_training_loss_error
 
     def validate_batch(self, inputs, targets, learning_rate):
@@ -242,6 +240,7 @@ class Seq2Seq:
                 self.sequence_length: targets.shape[1],
                 self.keep_prob: 1
             })
+        batch_validation_loss_error = tf.summary.scalar("batch_validation_loss_error", batch_validation_loss_error)
         return batch_validation_loss_error
 
     def inference(self, question, questions_words_2_ints, answers_ints_2_words):
@@ -305,7 +304,8 @@ class Seq2Seq:
 
     def _build_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-        tf.summary.FileWriter('{output_dir}/chatbot-tfboard/2'.format(output_dir=self.output_dir), self.session.graph)
+        # Summary writer for TF Board
+        self.summary_writer = tf.summary.FileWriter('{output_dir}/chatbot-tfboard/2'.format(output_dir=self.output_dir), self.session.graph)
 
     def _create_session(self):
         """Initialize the TensorFlow session"""

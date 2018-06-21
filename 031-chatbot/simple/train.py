@@ -1,12 +1,23 @@
-import tensorflow as tf
 import time
 import random
 import argparse
 from .data import Dataset
 from .model import Seq2Seq
+from .utils import bleu
 
 # Dummy
-sample_questions = ['hello', 'how are you?', 'what do you want?', 'who are you?', 'I am your creator']
+sample_questions = [
+    'hello',
+    'how are you?',
+    'what do you want?',
+    'who are you?',
+    'I am your creator',
+    'what are you doing?',
+    'what is life?',
+    'where did we come from?',
+    'what is your name?',
+    'I\'m your god'
+]
 
 
 def sample_reply(model, ds):
@@ -15,7 +26,12 @@ def sample_reply(model, ds):
         question=sample_question,
         questions_words_2_ints=ds.sub.questions_words_2_counts,
         answers_ints_2_words=ds.sub.answers_counts_2_words)
-    print('Question: {question}\n' 'Answer: {answer}'.format(question=sample_question, answer=sample_answer))
+    reference = [sample_question.split()]
+    candidate = sample_answer.split()
+    score = bleu.compute_bleu(reference_corpus=reference, translation_corpus=candidate)
+    print('Question: {question}\n'
+          'Answer: {answer}\n'
+          'BLEU: {bleu}'.format(question=sample_question, answer=sample_answer, bleu=score[0]))
 
 
 def add_arguments(parser):
@@ -92,6 +108,7 @@ def main():
     '''
 
     for epoch in range(1, epochs + 1):
+        # Sample to check current progress
         sample_reply(model, ds)
         for batch_index, (padded_question_in_batch, padded_answers_in_batch) in enumerate(ds.get_batches(batch_size)):
 
@@ -99,10 +116,11 @@ def main():
             batch_training_loss_error = model.train_batch(
                 inputs=padded_question_in_batch, targets=padded_answers_in_batch, learning_rate=learning_rate)
             total_training_loss_error += batch_training_loss_error
+            # Sumamrising to TF Board: training loss
+            model.summary_writer.add_summary(batch_training_loss_error, epoch * batch_index)
             ending_time = time.time()
             batch_time = ending_time - starting_time
 
-            # Smapling to check current progress
             # At every batch_index_check_training_loss (e.g. 100), we will print the error
             if batch_index % batch_index_check_training_loss == 0:
                 # :>3 means 3 figures; :>4 means 4 figures; .3f means float with 3 decimals
@@ -127,6 +145,8 @@ def main():
                     # Probability is 1 when we are doing validation
                     batch_validation_loss_error = model.validate_batch(
                         inputs=padded_question_in_batch, targets=padded_answers_in_batch, learning_rate=learning_rate)
+                    # Sumamrising to TF Board: validation loss
+                    model.summary_writer.add_summary(batch_validation_loss_error, epoch * batch_index)
 
                     total_validation_loss_error += batch_validation_loss_error
                 ending_time = time.time()
