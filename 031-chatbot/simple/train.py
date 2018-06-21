@@ -116,8 +116,6 @@ def main():
             batch_training_loss_error = model.train_batch(
                 inputs=padded_question_in_batch, targets=padded_answers_in_batch, learning_rate=learning_rate)
             total_training_loss_error += batch_training_loss_error
-            # Sumamrising to TF Board: training loss
-            model.summary_writer.add_summary(batch_training_loss_error, epoch * batch_index)
             ending_time = time.time()
             batch_time = ending_time - starting_time
 
@@ -145,8 +143,6 @@ def main():
                     # Probability is 1 when we are doing validation
                     batch_validation_loss_error = model.validate_batch(
                         inputs=padded_question_in_batch, targets=padded_answers_in_batch, learning_rate=learning_rate)
-                    # Sumamrising to TF Board: validation loss
-                    model.summary_writer.add_summary(batch_validation_loss_error, epoch * batch_index)
 
                     total_validation_loss_error += batch_validation_loss_error
                 ending_time = time.time()

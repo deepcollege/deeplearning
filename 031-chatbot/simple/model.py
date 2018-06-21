@@ -228,7 +228,6 @@ class Seq2Seq:
                 self.sequence_length: targets.shape[1],
                 self.keep_prob: self.model_hparams['keep_probability']
             })
-        batch_training_loss_error = tf.summary.scalar("batch_training_loss_error", batch_training_loss_error)
         return batch_training_loss_error
 
     def validate_batch(self, inputs, targets, learning_rate):
@@ -240,7 +239,6 @@ class Seq2Seq:
                 self.sequence_length: targets.shape[1],
                 self.keep_prob: 1
             })
-        batch_validation_loss_error = tf.summary.scalar("batch_validation_loss_error", batch_validation_loss_error)
         return batch_validation_loss_error
 
     def inference(self, question, questions_words_2_ints, answers_ints_2_words):
