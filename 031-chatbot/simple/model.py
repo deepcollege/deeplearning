@@ -27,11 +27,9 @@ class Seq2Seq:
             self,
             model_hparams,
             FLAGS,
-            session=None,
     ):
         self.model_hparams = model_hparams
         self.output_dir = FLAGS.output
-        self.session = session
 
     def compile(self, mode='training'):
         # Initiating session
@@ -149,7 +147,7 @@ class Seq2Seq:
             learning_rate = tf.train.exponential_decay(
                 self.model_hparams['learning_rate'], global_step, 10000, 0.96, staircase=True)
 
-            optimizer = tf.train.AdamOptimizer(self.model_hparams['learning_rate'])
+            optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
             gradients = optimizer.compute_gradients(loss_error)
             # Gradient clipping
             clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.), grad_variable)
@@ -224,7 +222,7 @@ class Seq2Seq:
         return optimizer_gradient_clipping, loss_error, test_predictions
 
     def train_batch(self, inputs, targets, learning_rate):
-        _, batch_training_loss_error = self.session.run(
+        batch_training_accuracy, batch_training_loss_error = self.session.run(
             [self.optimizer_gradient_clipping, self.loss_error], {
                 self.inputs: inputs,
                 self.targets: targets,
@@ -232,6 +230,7 @@ class Seq2Seq:
                 self.sequence_length: targets.shape[1],
                 self.keep_prob: self.model_hparams['keep_probability']
             })
+        print('checking accuracy', batch_training_accuracy)
         return batch_training_loss_error
 
     def validate_batch(self, inputs, targets, learning_rate):

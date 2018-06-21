@@ -1,3 +1,4 @@
+import tensorflow as tf
 import time
 import random
 import argparse
@@ -81,6 +82,14 @@ def main():
     # Compiling model
     model = Seq2Seq(model_hparams=model_hparams, FLAGS=FLAGS)
     model.compile()
+
+    '''
+    saver = tf.train.Saver()
+    model.session.run(tf.global_variables_initializer())
+    saver.restore(model.session, checkpoint)
+    g = tf.get_default_graph()
+    exit()
+    '''
 
     for epoch in range(1, epochs + 1):
         sample_reply(model, ds)
