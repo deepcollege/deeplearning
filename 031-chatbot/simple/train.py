@@ -54,8 +54,6 @@ def main():
     batch_size = 32
     epochs = 100
     learning_rate = 0.001
-    learning_rate_decay = 0.9
-    min_learning_rate = 0.0001
     batch_index_check_training_loss = 100
     batch_index_check_validation_loss = (ds.sub.num_questions_word2count // batch_size // 2) - 1
     total_training_loss_error = 0
@@ -128,11 +126,6 @@ def main():
                     len(ds.sub.validation_questions) / batch_size)
                 print('Validation Loss Error: {:>6.3f}, '
                       'Batch Validation Time: {:d} seconds'.format(average_validation_loss_error, int(batch_time)))
-                learning_rate *= learning_rate_decay
-
-                # if lr goes below min_learning_rate
-                if learning_rate < min_learning_rate:
-                    learning_rate = min_learning_rate
 
                 # Early stopping
                 list_validation_loss_error.append(average_validation_loss_error)
