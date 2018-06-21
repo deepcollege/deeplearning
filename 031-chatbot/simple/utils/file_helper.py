@@ -10,6 +10,15 @@ def file_exists(path):
     return True
 
 
+def file_startswith_exists(path, startswith):
+    for fname in os.listdir(path):
+        if fname.startswith(startswith):
+            return True
+    return False
+
+
 def try_create_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+

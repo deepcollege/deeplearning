@@ -1,9 +1,10 @@
 import time
 import random
 import argparse
+import tensorflow as tf
 from .data import Dataset
 from .model import Seq2Seq
-from .utils import bleu
+from .utils import bleu, file_helper
 
 # Dummy
 sample_questions = [
@@ -60,12 +61,16 @@ def main():
     print('Initaiting the training with the following FLAGS')
     print(FLAGS)
 
+
     # Dataset, default should be using Cornell
     ds = Dataset(FLAGS)
     ds.load()
 
     # Model savepoint
-    checkpoint = '{output_dir}/chatbot_weights.ckpt'.format(output_dir=FLAGS.output)
+    checkpoint_fname = 'chatbot_weights.ckpt'
+    checkpoint = '{output_dir}/{checkpoint_fname}'.format(
+        output_dir=FLAGS.output,
+        checkpoint_fname=checkpoint_fname)
 
     # Hyperparams
     batch_size = 32
@@ -99,13 +104,11 @@ def main():
     model = Seq2Seq(model_hparams=model_hparams, FLAGS=FLAGS)
     model.compile()
 
-    '''
-    saver = tf.train.Saver()
-    model.session.run(tf.global_variables_initializer())
-    saver.restore(model.session, checkpoint)
-    g = tf.get_default_graph()
-    exit()
-    '''
+    # Restoring existing weights if it exists
+    if file_helper.file_startswith_exists(FLAGS.output, checkpoint_fname):
+        saver = tf.train.Saver()
+        model.session.run(tf.global_variables_initializer())
+        saver.restore(model.session, checkpoint)
 
     for epoch in range(1, epochs + 1):
         # Sample to check current progress
