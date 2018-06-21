@@ -140,8 +140,14 @@ class Seq2Seq:
         # Loss
         # https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss
         with tf.variable_scope('optimizer'):
+
             loss_error = tf.contrib.seq2seq.sequence_loss(training_predictions, targets,
                                                           tf.ones([self.input_shape[0], self.sequence_length]))
+
+            # Global step and exponential decay
+            global_step = tf.Variable(0, dtype=tf.int32, trainable=False)
+            learning_rate = tf.train.exponential_decay(
+                self.model_hparams['learning_rate'], global_step, 10000, 0.96, staircase=True)
 
             optimizer = tf.train.AdamOptimizer(self.model_hparams['learning_rate'])
             gradients = optimizer.compute_gradients(loss_error)
@@ -149,10 +155,15 @@ class Seq2Seq:
             clipped_gradients = [(tf.clip_by_value(grad_tensor, -5., 5.), grad_variable)
                                  for grad_tensor, grad_variable in gradients if grad_tensor is not None]
             optimizer_gradient_clipping = optimizer.apply_gradients(clipped_gradients)
+
+            # Combine ops
+            increment_global_step = tf.assign(global_step, global_step + 1)
+            combined_optimization_operation = tf.group(optimizer_gradient_clipping, increment_global_step)
+
             # TODO: Fix below
             # tf.summary.scalar("gradient_norm", gradients)
             # tf.summary.scalar("clipped_gradient", optimizer_gradient_clipping)
-            return optimizer_gradient_clipping, loss_error
+            return combined_optimization_operation, loss_error
 
     def decode_test_set(self, encoder_state, decoder_cell, decoder_embeddings_matrix, sos_id, eos_id, maximum_length,
                         num_words, decoding_scope, output_function, keep_prob, batch_size):
@@ -295,8 +306,7 @@ class Seq2Seq:
 
     def _build_tensorboard(self):
         self.merged_summary = tf.summary.merge_all()
-        tf.summary.FileWriter(
-            '{output_dir}/chatbot-tfboard/2'.format(output_dir=self.output_dir), self.session.graph)
+        tf.summary.FileWriter('{output_dir}/chatbot-tfboard/2'.format(output_dir=self.output_dir), self.session.graph)
 
     def _create_session(self):
         """Initialize the TensorFlow session"""
