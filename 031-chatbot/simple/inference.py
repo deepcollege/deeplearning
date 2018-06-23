@@ -76,11 +76,11 @@ model.compile()
 cwd = os.getcwd()
 print('Loading file from', cwd)
 output_checkpoint = cwd + '/simple/output/chatbot_weights.ckpt'
-session = tf.InteractiveSession()
-print('Interactive session enabled')
-session.run(tf.global_variables_initializer())
+# session = tf.InteractiveSession()
+# print('Interactive session enabled')
+# session.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
-saver.restore(session, output_checkpoint)
+saver.restore(model.session, output_checkpoint)
 
 
 def sample_reply(model, ds, question):
