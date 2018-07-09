@@ -10,6 +10,7 @@ class Word2vec:
     loss = None    # TF Loss
     optimizer = None    # Optimizer
     session = None    # TF Session
+    saver = None  # TF Checkpoint saver
 
     def __init__(self, **kwargs):
         # Hyperparams
@@ -31,8 +32,9 @@ class Word2vec:
 
         # Look up embeddings for inputs.
         # The conversion of 10,000 columned matrix into a 200 columned matrix is called word embedding.
-        embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_size], -1.0, 1.0))
-        embed = tf.nn.embedding_lookup(embeddings, self.X)    # lookup table
+        with tf.device("/cpu:0"):
+          embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_size], -1.0, 1.0))
+          embed = tf.nn.embedding_lookup(embeddings, self.X)    # lookup table
 
         # Construct the variables for the NCE loss
         nce_weights = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_size], -1.0, 1.0))
@@ -44,8 +46,22 @@ class Word2vec:
         # Using the adam optimizer
         self.optimizer = tf.train.AdamOptimizer(1e-1).minimize(self.loss)
 
+        # Init the session
+        self.session.run(tf.global_variables_initializer())
+
+        # Init TF Saver
+        self.saver = tf.train.Saver()
+
     def train_batch(self, inputs, targets):
         _, loss_val = self.session.run([self.optimizer, self.loss], feed_dict={self.X: inputs, self.y: targets})
+        return loss_val
+
+    def save_model(self, checkpoint):
+      self.saver.save(self.session, checkpoint)
+
+    def toJSON(self):
+        ''' Util func to check current values '''
+        return self.__dict__
 
     def _create_session(self):
         """Initialize the TensorFlow session"""
@@ -57,7 +73,3 @@ class Word2vec:
             session = tf.Session()
 
         return session
-
-    def toJSON(self):
-        ''' Util func to check current values '''
-        return self.__dict__
