@@ -6,6 +6,7 @@ class Word2vec:
     embedding_size = 2    # word embedding size
     num_sampled = 15    # Number of negative examples to sample.
     vocab_size = 0    # Vocab size created from the data API
+    embedding = None
     gpu_dynamic_memory_growth = False
     loss = None    # TF Loss
     optimizer = None    # Optimizer
@@ -33,8 +34,8 @@ class Word2vec:
         # Look up embeddings for inputs.
         # The conversion of 10,000 columned matrix into a 200 columned matrix is called word embedding.
         with tf.device("/cpu:0"):
-          embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_size], -1.0, 1.0))
-          embed = tf.nn.embedding_lookup(embeddings, self.X)    # lookup table
+          self.embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_size], -1.0, 1.0))
+          embed = tf.nn.embedding_lookup(self.embeddings, self.X)    # lookup table
 
         # Construct the variables for the NCE loss
         nce_weights = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_size], -1.0, 1.0))
