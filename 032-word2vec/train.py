@@ -12,7 +12,7 @@ def main():
         'num_sampled': 15,
         'vocab_size': got_data.vocab_size,
         'gpu_dynamic_memory_growth': False,
-        'checkpoint': '/outputs/w2v'
+        'checkpoint': '/output/w2v'
     }
     w2v = Word2vec(**hparams)
     print('Checking W2V initiation params', w2v.toJSON())
