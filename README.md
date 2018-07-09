@@ -100,7 +100,7 @@ Install on Linux: https://docs.docker.com/install/
 
 ```sh
 $ cd deepcollege/deeplearning
-$ docker run -v $(pwd):/notebooks -it -p 8888:8888 gcr.io/tensorflow/tensorflow
+$ docker run -v $(pwd):/notebooks -it -p 8888:8888 tensorflow/tensorflow
 ```
 
 2. On Windows *Powershell*

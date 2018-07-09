@@ -62,49 +62,49 @@ voc_size = len(dic)
 print('Vocab size:', voc_size)
 
 # Make indexed word data
-data = [dic[word] for word in words] #count rank for every word in words
+data = [dic[word] for word in words]    #count rank for every word in words
 print('Sample data', data[:10], words[:10])
 
 # Let's make a training data for window size 1 for simplicity
 window_size = 1
 cbow_pairs = []
 for i in range(1, len(data) - window_size):
-  cbow_pairs.append([[data[i - window_size], data[i + window_size]], data[i]])
+    cbow_pairs.append([[data[i - window_size], data[i + window_size]], data[i]])
 
 print('Context pairs rank ids', cbow_pairs[:5])
 print()
 
 cbow_pairs_words = []
 for i in range(1, len(words) - window_size):
-  cbow_pairs_words.append([[words[i - window_size], words[i + window_size]], words[i]])
+    cbow_pairs_words.append([[words[i - window_size], words[i + window_size]], words[i]])
 print('Context pairs words', cbow_pairs_words[:5])
 
 # Creating the skip-gram
-skip_gram_pairs=[]
+skip_gram_pairs = []
 
 for c in cbow_pairs:
-    skip_gram_pairs.append([c[1],c[0][0]])
-    skip_gram_pairs.append([c[1],c[0][1]])
+    skip_gram_pairs.append([c[1], c[0][0]])
+    skip_gram_pairs.append([c[1], c[0][1]])
 print('skip-gram pairs', skip_gram_pairs[:5])
 print()
-skip_gram_pairs_words=[]
+skip_gram_pairs_words = []
 for c in cbow_pairs_words:
-    skip_gram_pairs_words.append([c[1],c[0][0]])
-    skip_gram_pairs_words.append([c[1],c[0][1]])
+    skip_gram_pairs_words.append([c[1], c[0][0]])
+    skip_gram_pairs_words.append([c[1], c[0][1]])
 print('skip-gram pairs words', skip_gram_pairs_words[:5])
 
 
 def get_batch(size):
-  assert size < len(skip_gram_pairs)
-  X = []
-  Y = []
-  rdm = np.random.choice(range(len(skip_gram_pairs)), size, replace=False)
+    assert size < len(skip_gram_pairs)
+    X = []
+    Y = []
+    rdm = np.random.choice(range(len(skip_gram_pairs)), size, replace=False)
 
-  for r in rdm:
-    X.append(skip_gram_pairs[r][0])
-    Y.append([skip_gram_pairs[r][1]])
-  return X, Y
+    for r in rdm:
+        X.append(skip_gram_pairs[r][0])
+        Y.append([skip_gram_pairs[r][1]])
+    return X, Y
 
 
 # generate_batch test
-print ('Batches (x, y)', get_batch(3))
+print('Batches (x, y)', get_batch(3))
