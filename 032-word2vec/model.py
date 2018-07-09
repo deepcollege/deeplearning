@@ -6,28 +6,27 @@ class Word2vec:
   embedding_size = 2 # word embedding size
   num_sampled = 15 # Number of negative examples to sample.
   vocab_size = 0 # Vocab size created from the data API
+  gpu_dynamic_memory_growth = False
   loss = None # TF Loss
   optimizer = None # Optimizer
-  gpu_dynamic_memory_growth = False
   session = None # TF Session
 
   def __init__(
       self,
-      batch_size = 20,
-      embedding_size = 2,
-      num_sampled = 15,
-      vocab_size = 0,
-      gpu_dynamic_memory_growth = False
+      **kwargs
   ):
     # Hyperparams
-    self.batch_size = batch_size
-    self.embedding_size = embedding_size
-    self.num_sampled = num_sampled
-    self.vocab_size = vocab_size
-    self.gpu_dynamic_memory_growth = gpu_dynamic_memory_growth
+    self.batch_size = kwargs.get('batch_size', 20)
+    self.embedding_size = kwargs.get('embedding_size', 2)
+    self.num_sampled = kwargs.get('num_sampled', 15)
+    self.vocab_size = kwargs.get('vocab_size', 0)
+    self.gpu_dynamic_memory_growth = kwargs.get('gpu_dynamic_memory_growth', False)
 
-    self.X = tf.placeholder(tf.int32, shape=[batch_size])
-    self.y = tf.placeholder(tf.int32, shape=[batch_size, 1])
+    if self.vocab_size <= 0:
+      raise Exception('Cannot create a Word2Vec model with 0 vocab size')
+
+    self.X = tf.placeholder(tf.int32, shape=[self.batch_size])
+    self.y = tf.placeholder(tf.int32, shape=[self.batch_size, 1])
 
   def compile(self):
     # Initiate a session
