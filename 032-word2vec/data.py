@@ -2,6 +2,7 @@ import os
 import re
 import io
 import collections
+import numpy as np
 # from urllib.request import urlopen
 from urllib2 import urlopen
 
@@ -145,7 +146,19 @@ class GOTData:
         self.skip_gram_pairs_words.append([c[1], c[0][1]])
       print('skip-gram pairs words', self.skip_gram_pairs_words[:5])
 
+    def get_batch(self, size):
+      assert size < len(self.skip_gram_pairs)
+      X = []
+      y = []
+      rdm = np.random.choice(range(len(self.skip_gram_pairs)), size, replace=False)
+
+      for r in rdm:
+        X.append(self.skip_gram_pairs[r][0])
+        y.append([self.skip_gram_pairs[r][1]])
+      return X, y
+
 
 if __name__ == "__main__":
     gotData = GOTData()
     gotData.load()
+    print(gotData.get_batch(3))
